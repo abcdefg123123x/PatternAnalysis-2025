@@ -54,3 +54,29 @@ def split_data(csv_path):
     val_samples = df.iloc[test_end:].to_dict('records')
 
     return train_samples, test_samples, val_samples
+
+def get_dataloaders():
+    image_root = "./ISIC_2020_Training_JPEG"
+    csv_path = "./train-metadata.csv"
+    train_samples, test_samples, val_samples = split_data(csv_path)
+
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomVerticalFlip(),
+        transforms.RandomRotation(15),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5] * 3, [0.5] * 3)
+    ])
+
+    train_loader = DataLoader(ISICDataset(image_root, train_samples, transform),
+                              batch_size=BATCH_SIZE, shuffle=True,
+                              num_workers=WORKERS)
+    test_loader = DataLoader(ISICDataset(image_root, test_samples, transform),
+                             batch_size=BATCH_SIZE, shuffle=False,
+                             num_workers=WORKERS)
+    val_loader = DataLoader(ISICDataset(image_root, val_samples, transform),
+                            batch_size=BATCH_SIZE, shuffle=False,
+                            num_workers=WORKERS)
+
+    return train_loader, test_loader, val_loader
