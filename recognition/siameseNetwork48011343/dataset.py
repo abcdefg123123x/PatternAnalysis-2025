@@ -38,3 +38,19 @@ class ISICDataset(Dataset):
 
         return (load_img(anchor), load_img(positive), load_img(negative),
                 anchor['target'])
+
+def split_data(csv_path):
+    df = pd.read_csv(csv_path) # df represents data of patients
+    malignant = df[df['target']==1].copy()
+    benign = df[df['target'] == 0].sample(n=len(malignant), random_state=42)
+    df = pd.concat([malignant, benign]).sample(frac=1, random_state=42)
+
+    n = len(df)
+    train_end = int(n * TRAIN_SPLIT)
+    test_end = train_end + int(n * TEST_SPLIT)
+
+    train_samples = df.iloc[:train_end].to_dict('records')
+    test_samples = df.iloc[train_end:test_end].to_dict('records')
+    val_samples = df.iloc[test_end:].to_dict('records')
+
+    return train_samples, test_samples, val_samples
