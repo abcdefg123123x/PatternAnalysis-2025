@@ -19,3 +19,27 @@ class SiameseNetwork(nn.Module):
     def forward(self, x1, x2, x3):
         return (self.forward_once(x1), self.forward_once(x2),
                 self.forward_once(x3))
+
+class BinaryClassifier(nn.Module):
+    """
+    Binary classifier for features from Siamese network.
+
+    Takes 2048-dim feature embeddings and classifies them as benign (0) or
+    malignant (1). Includes dropout for regularisation.
+
+    Architecture: 2048 -> 1024 -> 256 -> 2
+    """
+    def __init__(self, in_features=2048):
+        super().__init__()
+        self.layers = nn.Sequential(
+            nn.Linear(in_features, 1024),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(1024, 256),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(256, 2)
+        )
+
+    def forward(self, x):
+        return self.layers(x)
