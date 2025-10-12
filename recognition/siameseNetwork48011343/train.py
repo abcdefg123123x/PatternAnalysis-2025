@@ -166,3 +166,8 @@ if __name__ == "__main__":
     train_classifier(classifier, train_features, train_labels, val_features,
                      val_labels,
                      cross_entropy, optimiser_classifier, EPOCHS_CLASSIFIER)
+
+    # Test the classifier
+    test_loss, test_acc = evaluate_classifier(classifier, test_features,
+                                              test_labels, cross_entropy)
+    print(f"Test Accuracy: {100 * test_acc:.2f}%")
