@@ -1,3 +1,4 @@
+import os
 import torch
 from torch.nn import TripletMarginLoss, CrossEntropyLoss
 from torch.optim import Adam
@@ -67,7 +68,9 @@ def evaluate_classifier(classifier, features, labels, loss_fn):
 
 # Training functions
 def train_siamese(model, train_loader, val_loader, loss_fn, optimiser,
-                  epochs, device):
+                  epochs, device, save_path="checkpoints/best_siamese.pth"):
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    best_val_acc = 0.0
     train_losses, val_losses = [], []
     train_accs, val_accs = [], []
 
@@ -93,6 +96,12 @@ def train_siamese(model, train_loader, val_loader, loss_fn, optimiser,
         train_accs.append(train_acc)
         val_accs.append(val_acc)
 
+        # Save Siamese model based on highest validation accuracy
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            torch.save(model.state_dict(), save_path)
+            print(f"Saved best Siamese model with val_acc: {best_val_acc:.4f}")
+
         print(f"Siamese Epoch {epoch+1}/{epochs} - "
             f"Train Loss: {train_losses[-1]:.4f}, Train Acc: {train_acc:.4f} - "
             f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
@@ -100,7 +109,10 @@ def train_siamese(model, train_loader, val_loader, loss_fn, optimiser,
     return train_losses, val_losses, train_accs, val_accs
 
 def train_classifier(classifier, features_train, labels_train,
-                     features_val, labels_val, loss_fn, optimiser, epochs):
+                     features_val, labels_val, loss_fn, optimiser, epochs,
+                     save_path="checkpoints/best_classifier.pth"):
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    best_val_acc = 0.0
     train_losses, val_losses = [], []
     train_accs, val_accs = [], []
 
@@ -130,6 +142,13 @@ def train_classifier(classifier, features_train, labels_train,
         train_accs.append(correct_train / total_train)
         val_accs.append(val_acc)
 
+        # Save best binary classifier based on highest validation accuracy
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            torch.save(classifier.state_dict(), save_path)
+            print(
+                f"Saved best Classifier model with val_acc: {best_val_acc:.4f}")
+
         print(f"Classifier Epoch {epoch + 1}/{epochs} - "
               f"Train Loss: {train_losses[-1]:.4f}, Train Acc: {train_accs[-1]:.4f} - "
               f"Val Loss: {val_losses[-1]:.4f}, Val Acc: {val_accs[-1]:.4f}")
@@ -142,7 +161,7 @@ if __name__ == "__main__":
 
     # Models
     siamese = SiameseNetwork().to(device)
-    classifier = BinaryClassifier.to(device)
+    classifier = BinaryClassifier().to(device)
 
     # Losses and optimisers
     triplet_loss = TripletMarginLoss(margin=1.0)
