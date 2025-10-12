@@ -135,3 +135,34 @@ def train_classifier(classifier, features_train, labels_train,
               f"Val Loss: {val_losses[-1]:.4f}, Val Acc: {val_accs[-1]:.4f}")
 
     return train_losses, val_losses, train_accs, val_accs
+
+if __name__ == "__main__":
+    # Dataloaders
+    train_loader, test_loader, val_loader = get_dataloaders()
+
+    # Models
+    siamese = SiameseNetwork().to(device)
+    classifier = BinaryClassifier.to(device)
+
+    # Losses and optimisers
+    triplet_loss = TripletMarginLoss(margin=1.0)
+    cross_entropy = CrossEntropyLoss()
+    optimiser_siamese = Adam(siamese.parameters(), lr=LR_SIAMESE)
+    optimiser_classifier = Adam(classifier.parameters(), lr=LR_CLASSIFIER)
+
+    # Train Siamese Network
+    train_siamese(siamese, train_loader, val_loader, triplet_loss,
+                  optimiser_siamese, EPOCHS_SIAMESE, device)
+
+    # Extract features from Siamese network
+    train_features, train_labels = extract_features_labels(siamese,
+                                                           train_loader, device)
+    val_features, val_labels = extract_features_labels(siamese, val_loader,
+                                                       device)
+    test_features, test_labels = extract_features_labels(siamese, test_loader,
+                                                         device)
+
+    # Train binary classifier
+    train_classifier(classifier, train_features, train_labels, val_features,
+                     val_labels,
+                     cross_entropy, optimiser_classifier, EPOCHS_CLASSIFIER)
