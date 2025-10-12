@@ -173,6 +173,9 @@ if __name__ == "__main__":
     train_siamese(siamese, train_loader, val_loader, triplet_loss,
                   optimiser_siamese, EPOCHS_SIAMESE, device)
 
+    # Load the best Siamese network before feature extraction
+    siamese.load_state_dict(torch.load("checkpoints/best_siamese.pth"))
+
     # Extract features from Siamese network
     train_features, train_labels = extract_features_labels(siamese,
                                                            train_loader, device)
@@ -185,6 +188,9 @@ if __name__ == "__main__":
     train_classifier(classifier, train_features, train_labels, val_features,
                      val_labels,
                      cross_entropy, optimiser_classifier, EPOCHS_CLASSIFIER)
+
+    # Load the best classifier before testing
+    classifier.load_state_dict(torch.load("checkpoints/best_classifier.pth"))
 
     # Test the classifier
     test_loss, test_acc = evaluate_classifier(classifier, test_features,
