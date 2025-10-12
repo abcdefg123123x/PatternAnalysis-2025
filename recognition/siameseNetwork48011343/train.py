@@ -64,3 +64,37 @@ def evaluate_classifier(classifier, features, labels, loss_fn):
             correct += (preds == lbls).sum().item()
             total += lbls.size(0)
     return total_loss / len(features), correct / total
+
+# Training functions
+def train_siamese(model, train_loader, val_loader, loss_fn, optimiser,
+                  epochs, device):
+    train_losses, val_losses = [], []
+    train_accs, val_accs = [], []
+
+    for epoch in range(epochs):
+        model.train()
+        total_loss = 0
+        loop = tqdm(train_loader, desc=f"Siamese Epoch {epoch+1}/{epochs}")
+        for anchor, pos, neg, _ in loop:
+            anchor, pos, neg = anchor.to(device), pos.to(device), neg.to(device)
+            optimiser.zero_grad()
+            a_feat, p_feat, n_feat = model(anchor, pos, neg)
+            loss = loss_fn(a_feat, p_feat, n_feat)
+            loss.backward()
+            optimiser.step()
+            total_loss += loss.item()
+            loop.set_postfix(loss=total_loss / (loop.n + 1))
+
+        train_losses.append(total_loss / len(train_loader))
+        train_acc = compute_siamese_accuracy(model, train_loader, device)
+        val_loss = compute_siamese_val_loss(model, val_loader, loss_fn, device)
+        val_acc = compute_siamese_accuracy(model, val_loader, device)
+        val_losses.append(val_loss)
+        train_accs.append(train_acc)
+        val_accs.append(val_acc)
+
+        print(f"Siamese Epoch {epoch+1}/{epochs} - "
+            f"Train Loss: {train_losses[-1]:.4f}, Train Acc: {train_acc:.4f} - "
+            f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
+
+    return train_losses, val_losses, train_accs, val_accs
