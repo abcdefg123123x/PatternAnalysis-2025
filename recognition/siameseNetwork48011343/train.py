@@ -98,3 +98,40 @@ def train_siamese(model, train_loader, val_loader, loss_fn, optimiser,
             f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
 
     return train_losses, val_losses, train_accs, val_accs
+
+def train_classifier(classifier, features_train, labels_train,
+                     features_val, labels_val, loss_fn, optimiser, epochs):
+    train_losses, val_losses = [], []
+    train_accs, val_accs = [], []
+
+    for epoch in range(epochs):
+        classifier.train()
+        total_loss, correct_train, total_train = 0, 0, 0
+        loop = tqdm(zip(features_train, labels_train),
+                    total=len(features_train),
+                    desc=f"Classifier Epoch {epoch+1}/{epochs}")
+        for feats, labels in loop:
+            optimiser.zero_grad()
+            out = classifier(feats) # features from Siamese network
+            loss = loss_fn(out, labels)
+            loss.backward()
+            optimiser.step()
+            total_loss += loss.item()
+            preds = out.argmax(dim=1)
+            correct_train += (preds == labels).sum().item()
+            total_train += labels.size(0)
+            loop.set_postfix(loss=total_loss / (loop.n + 1),
+                             acc=correct_train / total_train)
+
+        val_loss, val_acc = evaluate_classifier(classifier, features_val,
+                                                labels_val, loss_fn)
+        train_losses.append(total_loss / len(features_train))
+        val_losses.append(val_loss)
+        train_accs.append(correct_train / total_train)
+        val_accs.append(val_acc)
+
+        print(f"Classifier Epoch {epoch + 1}/{epochs} - "
+              f"Train Loss: {train_losses[-1]:.4f}, Train Acc: {train_accs[-1]:.4f} - "
+              f"Val Loss: {val_losses[-1]:.4f}, Val Acc: {val_accs[-1]:.4f}")
+
+    return train_losses, val_losses, train_accs, val_accs
