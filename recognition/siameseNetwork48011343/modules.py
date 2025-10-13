@@ -12,11 +12,11 @@ class SiameseNetwork(nn.Module):
     """
     def __init__(self):
         super().__init__()
-        # Feture extractor backbone
+        # Feature extractor backbone
         self.feature_extractor = resnet34(weights=None)
         self.feature_extractor.fc = nn.Identity() # remove classification layer
 
-        # Projection hed (MLP)
+        # Projection head (MLP)
         self.projection = nn.Sequential(
             nn.Linear(512, 512),
             nn.BatchNorm1d(512),
