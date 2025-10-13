@@ -61,7 +61,6 @@ def get_dataloaders():
     train_samples, test_samples, val_samples = split_data(csv_path)
 
     transform = transforms.Compose([
-        transforms.Resize((224, 224)),
         transforms.RandomHorizontalFlip(),
         transforms.RandomVerticalFlip(),
         transforms.RandomRotation(15),
