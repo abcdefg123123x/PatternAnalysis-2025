@@ -1,4 +1,6 @@
 import os
+import random
+import numpy as np
 import torch
 from torch.nn import TripletMarginLoss, CrossEntropyLoss
 from torch.optim import Adam
@@ -11,6 +13,17 @@ EPOCHS_SIAMESE = 40
 EPOCHS_CLASSIFIER = 25
 LR_SIAMESE = 1e-4
 LR_CLASSIFIER = 5e-4
+
+# Generate or fix a seed for reproducibility
+seed = 100 # generate a random one with random.randint(0, 2**32 - 1)
+print(f"Using the following seed for reproducibility: {seed}")
+
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

@@ -39,14 +39,19 @@ class ISICDataset(Dataset):
         return (load_img(anchor), load_img(positive), load_img(negative),
                 anchor['target'])
 
-def split_data(csv_path, benign_fraction=0.2):  # 🔹 CHANGED: Added benign_fraction
+def split_data(csv_path, benign_fraction=0.2, seed=None):
     """
     Split the dataset while using a fraction of benign images.
 
     Arguments:
         csv_path: path to CSV metadata
         benign_fraction: float (0,1] - fraction of benign images to keep
+        seed: int - random seed for reproducibility
     """
+    if seed is not None:
+        random.seed(seed)
+        pd.np.random.seed(seed)
+
     df = pd.read_csv(csv_path)
     malignant = df[df['target'] == 1].copy()  # keep all malignant images
     benign = df[
@@ -54,10 +59,10 @@ def split_data(csv_path, benign_fraction=0.2):  # 🔹 CHANGED: Added benign_fra
 
     # Keep only a fraction of benign images
     n_benign = int(len(benign) * benign_fraction)
-    benign = benign.sample(n=n_benign, random_state=42)
+    benign = benign.sample(n=n_benign, random_state=seed)
 
     # Combine and shuffle
-    df = pd.concat([malignant, benign]).sample(frac=1, random_state=42)
+    df = pd.concat([malignant, benign]).sample(frac=1, random_state=seed)
 
     n = len(df)
     train_end = int(TRAIN_SPLIT * n)
@@ -70,15 +75,16 @@ def split_data(csv_path, benign_fraction=0.2):  # 🔹 CHANGED: Added benign_fra
     return train_samples, test_samples, val_samples
 
 
-def get_dataloaders(benign_fraction=0.2):
+def get_dataloaders(benign_fraction=0.2, seed=None):
     """
     Returns train, test, val dataloaders.
     benign_fraction: fraction of benign images to use in training
+    seed: random seed for reproducibility
     """
     image_root = "./ISIC_2020_Training_JPEG"
     csv_path = "./train-metadata.csv"
     train_samples, test_samples, val_samples = split_data(csv_path,
-                                                          benign_fraction)
+                                                    benign_fraction, seed=seed)
 
     transform = transforms.Compose([
         transforms.RandomHorizontalFlip(),
