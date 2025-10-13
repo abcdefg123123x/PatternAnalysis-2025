@@ -1,24 +1,45 @@
 import torch.nn as nn
-from torchvision.models import resnet50
+import torch.nn.functional as F
+from torchvision.models import resnet34
 
 class SiameseNetwork(nn.Module):
     """
-    Siamese Network using a ResNet50 backbone for feature extraction.
+    Siamese Network using a ResNet backbone + projection head.
 
-    Replaces the final classificaiton layer with identity to output 2048-dim
-    feature embeddings. Used for triplet loss training.
+    The backbone outputs a 512-dim feature, then the projection head
+    refines it into a lower-dimensional, normalised embedding suitable
+    for triplet loss training.
     """
     def __init__(self):
         super().__init__()
-        self.feature_extractor = resnet50(weights=None)
-        self.feature_extractor.fc = nn.Identity() # output embedding
+        # Feture extractor backbone
+        self.feature_extractor = resnet34(weights=None)
+        self.feature_extractor.fc = nn.Identity() # remove classification layer
+
+        # Projection hed (MLP)
+        self.projection = nn.Sequential(
+            nn.Linear(512, 512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(inplace=True),
+            nn.Linear(512, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(inplace=True),
+            nn.Linear(256, 128),
+        )
 
     def forward_once(self, x):
-        return self.feature_extractor(x)
+        feats = self.feature_extractor(x)
+        proj = self.projection(feats)
+        # Normalise embeddings to unit length
+        proj = F.normalize(proj, p=2, dim=1)
+        return proj
 
     def forward(self, x1, x2, x3):
-        return (self.forward_once(x1), self.forward_once(x2),
-                self.forward_once(x3))
+        return (
+            self.forward_once(x1),
+            self.forward_once(x2),
+            self.forward_once(x3)
+        )
 
 class BinaryClassifier(nn.Module):
     """
