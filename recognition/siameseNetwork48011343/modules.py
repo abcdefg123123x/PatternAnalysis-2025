@@ -43,23 +43,30 @@ class SiameseNetwork(nn.Module):
 
 class BinaryClassifier(nn.Module):
     """
-    Binary classifier for features from Siamese network.
+    Binary classifier for Siamese feature embeddings.
 
-    Takes 2048-dim feature embeddings and classifies them as benign (0) or
-    malignant (1). Includes dropout for regularisation.
-
-    Architecture: 2048 -> 1024 -> 256 -> 2
+    Architecture:
+        128 → 512 → 256 → 64 → 2
+    Includes BatchNorm and Dropout to improve generalization.
     """
-    def __init__(self, in_features=2048):
+
+    def __init__(self, in_features=128):
         super().__init__()
         self.layers = nn.Sequential(
-            nn.Linear(in_features, 1024),
+            nn.Linear(in_features, 512),
+            nn.BatchNorm1d(512),
             nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(1024, 256),
+            nn.Dropout(0.4),
+
+            nn.Linear(512, 256),
+            nn.BatchNorm1d(256),
             nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(256, 2)
+            nn.Dropout(0.4),
+
+            nn.Linear(256, 64),
+            nn.ReLU(),
+
+            nn.Linear(64, 2)
         )
 
     def forward(self, x):
