@@ -33,7 +33,7 @@ class ISICDataset(Dataset):
 
         def load_img(sample):
             img = Image.open(os.path.join(self.image_root,
-                                sample['isic_id' + ".jpg"])).convert('RGB')
+                                sample['isic_id'] + ".jpg")).convert('RGB')
             return self.transform(img)
 
         return (load_img(anchor), load_img(positive), load_img(negative),
