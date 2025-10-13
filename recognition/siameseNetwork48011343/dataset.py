@@ -39,15 +39,29 @@ class ISICDataset(Dataset):
         return (load_img(anchor), load_img(positive), load_img(negative),
                 anchor['target'])
 
-def split_data(csv_path):
-    df = pd.read_csv(csv_path) # df represents data of patients
-    malignant = df[df['target']==1].copy()
-    benign = df[df['target'] == 0].sample(n=len(malignant), random_state=42)
+def split_data(csv_path, benign_fraction=0.2):  # 🔹 CHANGED: Added benign_fraction
+    """
+    Split the dataset while using a fraction of benign images.
+
+    Arguments:
+        csv_path: path to CSV metadata
+        benign_fraction: float (0,1] - fraction of benign images to keep
+    """
+    df = pd.read_csv(csv_path)
+    malignant = df[df['target'] == 1].copy()  # keep all malignant images
+    benign = df[
+        df['target'] == 0].copy()  # keep all benign initially
+
+    # Keep only a fraction of benign images
+    n_benign = int(len(benign) * benign_fraction)
+    benign = benign.sample(n=n_benign, random_state=42)
+
+    # Combine and shuffle
     df = pd.concat([malignant, benign]).sample(frac=1, random_state=42)
 
     n = len(df)
-    train_end = int(n * TRAIN_SPLIT)
-    test_end = train_end + int(n * TEST_SPLIT)
+    train_end = int(TRAIN_SPLIT * n)
+    test_end = train_end + int(TEST_SPLIT * n)
 
     train_samples = df.iloc[:train_end].to_dict('records')
     test_samples = df.iloc[train_end:test_end].to_dict('records')
@@ -55,10 +69,16 @@ def split_data(csv_path):
 
     return train_samples, test_samples, val_samples
 
-def get_dataloaders():
+
+def get_dataloaders(benign_fraction=0.2):
+    """
+    Returns train, test, val dataloaders.
+    benign_fraction: fraction of benign images to use in training
+    """
     image_root = "./ISIC_2020_Training_JPEG"
     csv_path = "./train-metadata.csv"
-    train_samples, test_samples, val_samples = split_data(csv_path)
+    train_samples, test_samples, val_samples = split_data(csv_path,
+                                                          benign_fraction)
 
     transform = transforms.Compose([
         transforms.RandomHorizontalFlip(),
