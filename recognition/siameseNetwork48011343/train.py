@@ -7,7 +7,8 @@ from torch.optim import Adam
 from modules import SiameseNetwork, BinaryClassifier
 from dataset import get_dataloaders
 from tqdm import tqdm
-from utils import plot_tsne, plot_metrics, save_confusion_matrix
+from utils import (plot_tsne, plot_metrics, save_confusion_matrix,
+                   compute_roc_auc)
 
 # Hyperparameters
 EPOCHS_SIAMESE = 40
@@ -243,3 +244,7 @@ if __name__ == "__main__":
     # Save and print confusion matrix
     cm = save_confusion_matrix(classifier, test_features, test_labels,
                                save_path="checkpoints/test_conf_matrix.png")
+
+    # Compute ROC, AUC, Sensitivity, Specificity, and save ROC plot
+    metrics = compute_roc_auc(classifier, test_features, test_labels,
+                              save_path="checkpoints/test_roc_curve.png")

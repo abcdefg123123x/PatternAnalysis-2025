@@ -3,7 +3,8 @@ import torch
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.manifold import TSNE
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import (confusion_matrix, ConfusionMatrixDisplay,
+                             roc_curve, auc)
 
 def plot_metrics(train_losses, val_losses, train_accs, val_accs,
                  save_path_prefix="checkpoints/metrics", title="Model"):
@@ -104,3 +105,62 @@ def plot_tsne(features_list, labels_list, save_path="checkpoints/tsne_plot.png",
     plt.grid(True)
     plt.savefig(save_path)
     plt.close()
+
+def compute_roc_auc(classifier, features, labels, save_path="checkpoints/roc_curve.png"):
+    """
+    Compute ROC curve, AUC, sensitivity, and specificity.
+    Saves ROC plot and prints metrics.
+    """
+    import os
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+    classifier.eval()
+    all_probs = []
+    all_labels = []
+
+    with torch.no_grad():
+        for feats, lbls in zip(features, labels):
+            out = classifier(feats)
+            probs = torch.softmax(out, dim=1)[:, 1]  # probability for positive class
+            all_probs.append(probs.cpu())
+            all_labels.append(lbls.cpu())
+
+    all_probs = torch.cat(all_probs).numpy()
+    all_labels = torch.cat(all_labels).numpy()
+
+    # ROC and AUC
+    fpr, tpr, _ = roc_curve(all_labels, all_probs)
+    roc_auc = auc(fpr, tpr)
+
+    # Compute confusion matrix for sensitivity/specificity
+    preds = (all_probs >= 0.5).astype(int)
+    cm = confusion_matrix(all_labels, preds)
+    tn, fp, fn, tp = cm.ravel()
+
+    sensitivity = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    specificity = tn / (tn + fp) if (tn + fp) > 0 else 0.0
+
+    # Save ROC plot
+    plt.figure()
+    plt.plot(fpr, tpr, color="darkorange", lw=2, label=f"ROC curve (AUC = {roc_auc:.2f})")
+    plt.plot([0, 1], [0, 1], color="navy", lw=2, linestyle="--")
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title("Receiver Operating Characteristic (ROC) Curve")
+    plt.legend(loc="lower right")
+    plt.grid(True)
+    plt.savefig(save_path)
+    plt.close()
+
+    print(f"\nROC and AUC Results:")
+    print(f" - AUC: {roc_auc:.4f}")
+    print(f" - Sensitivity (Recall for positive): {sensitivity:.4f}")
+    print(f" - Specificity (True negative rate): {specificity:.4f}")
+    print(f" - Confusion Matrix:\n{cm}")
+
+    return {
+        "AUC": roc_auc,
+        "Sensitivity": sensitivity,
+        "Specificity": specificity,
+        "ConfusionMatrix": cm
+    }
