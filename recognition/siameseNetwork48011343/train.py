@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from matplotlib import pyplot as plt
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
+from sklearn.manifold import TSNE
 from torch.nn import TripletMarginLoss, CrossEntropyLoss
 from torch.optim import Adam
 from modules import SiameseNetwork, BinaryClassifier
@@ -145,6 +146,42 @@ def save_confusion_matrix(classifier, features, labels,
     print(cm)
     return cm
 
+
+def plot_tsne(features_list, labels_list, save_path="checkpoints/tsne_plot.png",
+              title="t-SNE Embeddings"):
+    """
+    Plot t-SNE of embeddings and save as PNG.
+
+    features_list: list of torch tensors (embeddings)
+    labels_list: list of torch tensors (labels)
+    save_path: file path to save the figure
+    """
+    import os
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+    # Combine batches
+    features_tensor = torch.cat(features_list).cpu().numpy()
+    labels_tensor = torch.cat(labels_list).cpu().numpy()
+
+    # Run t-SNE
+    tsne = TSNE(n_components=2, perplexity=30, learning_rate=200,
+                random_state=100)
+    features_2d = tsne.fit_transform(features_tensor)
+
+    # Plot
+    plt.figure(figsize=(8, 8))
+    for label in np.unique(labels_tensor):
+        idx = labels_tensor == label
+        plt.scatter(features_2d[idx, 0], features_2d[idx, 1],
+                    label=f"Class {label}", alpha=0.6)
+    plt.legend()
+    plt.title(title)
+    plt.xlabel("t-SNE 1")
+    plt.ylabel("t-SNE 2")
+    plt.grid(True)
+    plt.savefig(save_path)
+    plt.close()
+
 # Training functions
 def train_siamese(model, train_loader, val_loader, loss_fn, optimiser,
                   epochs, device, save_path="checkpoints/best_siamese.pth"):
@@ -270,6 +307,19 @@ if __name__ == "__main__":
                                                        device)
     test_features, test_labels = extract_features_labels(siamese, test_loader,
                                                          device)
+
+    # Plot t-SNE embeddings (saved as PNGs)
+    plot_tsne(train_features, train_labels,
+              save_path="checkpoints/train_embeddings_tsne.png",
+              title="Train Set t-SNE Embeddings")
+
+    plot_tsne(val_features, val_labels,
+              save_path="checkpoints/val_embeddings_tsne.png",
+              title="Validation Set t-SNE Embeddings")
+
+    plot_tsne(test_features, test_labels,
+              save_path="checkpoints/test_embeddings_tsne.png",
+              title="Test Set t-SNE Embeddings")
 
     # Train binary classifier
     (classifier_train_losses, classifier_val_losses, classifier_train_accs,
