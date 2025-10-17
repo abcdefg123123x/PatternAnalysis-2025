@@ -2,6 +2,8 @@ import os
 import random
 import numpy as np
 import torch
+from matplotlib import pyplot as plt
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 from torch.nn import TripletMarginLoss, CrossEntropyLoss
 from torch.optim import Adam
 from modules import SiameseNetwork, BinaryClassifier
@@ -78,6 +80,37 @@ def evaluate_classifier(classifier, features, labels, loss_fn):
             correct += (preds == lbls).sum().item()
             total += lbls.size(0)
     return total_loss / len(features), correct / total
+
+def save_confusion_matrix(classifier, features, labels,
+                          save_path="conf_matrix.png"):
+    """Compute, save, and print confusion matrix for classifier."""
+    classifier.eval()
+    all_preds = []
+    all_labels = []
+    with torch.no_grad():
+        for feats, lbls in zip(features, labels):
+            out = classifier(feats)
+            preds = out.argmax(dim=1)
+            all_preds.append(preds.cpu())
+            all_labels.append(lbls.cpu())
+
+    all_preds = torch.cat(all_preds).numpy()
+    all_labels = torch.cat(all_labels).numpy()
+
+    # Compute confusion matrix
+    cm = confusion_matrix(all_labels, all_preds)
+
+    # Save as an image
+    disp = ConfusionMatrixDisplay(cm)
+    disp.plot(cmap=plt.cm.Blues)
+    plt.title("Test Set Confusion Matrix")
+    plt.savefig(save_path)
+    plt.close()  # Close to free memory
+
+    # Print a text version
+    print("Confusion Matrix (test set):")
+    print(cm)
+    return cm
 
 # Training functions
 def train_siamese(model, train_loader, val_loader, loss_fn, optimiser,
@@ -209,3 +242,7 @@ if __name__ == "__main__":
     test_loss, test_acc = evaluate_classifier(classifier, test_features,
                                               test_labels, cross_entropy)
     print(f"Test Accuracy: {100 * test_acc:.2f}%")
+
+    # Save and print confusion matrix
+    cm = save_confusion_matrix(classifier, test_features, test_labels,
+                               save_path="checkpoints/test_conf_matrix.png")
