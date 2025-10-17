@@ -81,6 +81,39 @@ def evaluate_classifier(classifier, features, labels, loss_fn):
             total += lbls.size(0)
     return total_loss / len(features), correct / total
 
+def plot_metrics(train_losses, val_losses, train_accs, val_accs,
+                 save_path_prefix="checkpoints/metrics", title="Model"):
+    """
+    Plot training/validation loss and accuracy curves and save as PNG.
+    """
+    os.makedirs(os.path.dirname(save_path_prefix), exist_ok=True)
+
+    epochs = np.arange(1, len(train_losses) + 1)
+
+    # Plot Loss
+    plt.figure()
+    plt.plot(epochs, train_losses, label="Train Loss")
+    plt.plot(epochs, val_losses, label="Val Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title(f"{title} Loss Curve")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(f"{save_path_prefix}_loss.png")
+    plt.close()
+
+    # Plot Accuracy
+    plt.figure()
+    plt.plot(epochs, train_accs, label="Train Accuracy")
+    plt.plot(epochs, val_accs, label="Val Accuracy")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy")
+    plt.title(f"{title} Accuracy Curve")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(f"{save_path_prefix}_accuracy.png")
+    plt.close()
+
 def save_confusion_matrix(classifier, features, labels,
                           save_path="conf_matrix.png"):
     """Compute, save, and print confusion matrix for classifier."""
@@ -216,8 +249,16 @@ if __name__ == "__main__":
     optimiser_classifier = Adam(classifier.parameters(), lr=LR_CLASSIFIER)
 
     # Train Siamese Network
-    train_siamese(siamese, train_loader, val_loader, triplet_loss,
-                  optimiser_siamese, EPOCHS_SIAMESE, device)
+    (siamese_train_losses, siamese_val_losses, siamese_train_accs,
+     siamese_val_accs) = train_siamese(siamese, train_loader, val_loader,
+                                        triplet_loss, optimiser_siamese,
+                                       EPOCHS_SIAMESE, device)
+
+    # Plot Siamese metrics
+    plot_metrics(siamese_train_losses, siamese_val_losses,
+                 siamese_train_accs, siamese_val_accs,
+                 save_path_prefix="checkpoints/siamese_metrics",
+                 title="Siamese Network")
 
     # Load the best Siamese network before feature extraction
     siamese.load_state_dict(torch.load("checkpoints/best_siamese.pth"))
@@ -231,9 +272,17 @@ if __name__ == "__main__":
                                                          device)
 
     # Train binary classifier
-    train_classifier(classifier, train_features, train_labels, val_features,
-                     val_labels,
-                     cross_entropy, optimiser_classifier, EPOCHS_CLASSIFIER)
+    (classifier_train_losses, classifier_val_losses, classifier_train_accs,
+     classifier_val_accs) = train_classifier(
+        classifier, train_features, train_labels, val_features, val_labels,
+        cross_entropy, optimiser_classifier, EPOCHS_CLASSIFIER
+    )
+
+    # Plot Classifier metrics
+    plot_metrics(classifier_train_losses, classifier_val_losses,
+                 classifier_train_accs, classifier_val_accs,
+                 save_path_prefix="checkpoints/classifier_metrics",
+                 title="Binary Classifier")
 
     # Load the best classifier before testing
     classifier.load_state_dict(torch.load("checkpoints/best_classifier.pth"))
