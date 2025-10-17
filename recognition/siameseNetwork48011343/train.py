@@ -7,6 +7,7 @@ from torch.optim import Adam
 from modules import SiameseNetwork, BinaryClassifier
 from dataset import get_dataloaders
 from tqdm import tqdm
+from utils import plot_tsne, plot_metrics, save_confusion_matrix
 
 # Hyperparameters
 EPOCHS_SIAMESE = 40
