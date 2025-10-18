@@ -71,8 +71,8 @@ def save_confusion_matrix(classifier, features, labels,
     return cm
 
 
-def plot_tsne(features_list, labels_list, save_path="checkpoints/tsne_plot.png",
-              title="t-SNE Embeddings"):
+def plot_tsne(features_list, labels_list,
+              save_path="checkpoints/tsne_plot.png", title="t-SNE Embeddings"):
     """
     Plot t-SNE of embeddings and save as PNG.
 
@@ -106,7 +106,8 @@ def plot_tsne(features_list, labels_list, save_path="checkpoints/tsne_plot.png",
     plt.savefig(save_path)
     plt.close()
 
-def compute_roc_auc(classifier, features, labels, save_path="checkpoints/roc_curve.png"):
+def compute_roc_auc(classifier, features, labels,
+                    save_path="checkpoints/roc_curve.png"):
     """
     Compute ROC curve, AUC, sensitivity, and specificity.
     Saves ROC plot and prints metrics.
@@ -121,7 +122,7 @@ def compute_roc_auc(classifier, features, labels, save_path="checkpoints/roc_cur
     with torch.no_grad():
         for feats, lbls in zip(features, labels):
             out = classifier(feats)
-            probs = torch.softmax(out, dim=1)[:, 1]  # probability for positive class
+            probs = torch.softmax(out, dim=1)[:, 1]  # probability for pos class
             all_probs.append(probs.cpu())
             all_labels.append(lbls.cpu())
 
@@ -142,7 +143,8 @@ def compute_roc_auc(classifier, features, labels, save_path="checkpoints/roc_cur
 
     # Save ROC plot
     plt.figure()
-    plt.plot(fpr, tpr, color="darkorange", lw=2, label=f"ROC curve (AUC = {roc_auc:.2f})")
+    plt.plot(fpr, tpr, color="darkorange", lw=2,
+             label=f"ROC curve (AUC = {roc_auc:.2f})")
     plt.plot([0, 1], [0, 1], color="navy", lw=2, linestyle="--")
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
@@ -156,11 +158,9 @@ def compute_roc_auc(classifier, features, labels, save_path="checkpoints/roc_cur
     print(f" - AUC: {roc_auc:.4f}")
     print(f" - Sensitivity (Recall for positive): {sensitivity:.4f}")
     print(f" - Specificity (True negative rate): {specificity:.4f}")
-    print(f" - Confusion Matrix:\n{cm}")
 
     return {
         "AUC": roc_auc,
         "Sensitivity": sensitivity,
         "Specificity": specificity,
-        "ConfusionMatrix": cm
     }
