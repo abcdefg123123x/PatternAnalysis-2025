@@ -12,12 +12,33 @@ TRAIN_SPLIT = 0.7
 TEST_SPLIT = 0.2
 VAL_SPLIT = 0.1
 
+# Standard transform for benign images
+base_transform = transforms.Compose([
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomVerticalFlip(),
+    transforms.RandomRotation(15),
+    transforms.ToTensor(),
+    transforms.Normalize([0.5] * 3, [0.5] * 3)
+])
+
+# Apply strong transforms for malignant images
+malignant_transform = transforms.Compose([
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomVerticalFlip(),
+    transforms.RandomRotation(30),
+    transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3,
+                           hue=0.1),
+    transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1),
+                            shear=10),
+    transforms.ToTensor(),
+    transforms.Normalize([0.5] * 3, [0.5] * 3)
+])
+
 class ISICDataset(Dataset):
     """Dataset for ISIC 2020 Kaggle Challenge (triplet sampling)"""
-    def __init__(self, image_root, samples, transform=None):
+    def __init__(self, image_root, samples):
         self.image_root = image_root
         self.samples = samples
-        self.transform = transform
 
     def __len__(self):
         return len(self.samples)
@@ -33,13 +54,18 @@ class ISICDataset(Dataset):
 
         def load_img(sample):
             img = Image.open(os.path.join(self.image_root,
-                                sample['isic_id'] + ".jpg")).convert('RGB')
-            return self.transform(img)
+                                          sample['isic_id'] + ".jpg")).convert(
+                'RGB')
+            # Apply stronger augmentations for malignant images
+            if sample['target'] == 1:
+                return malignant_transform(img)
+            else:
+                return base_transform(img)
 
         return (load_img(anchor), load_img(positive), load_img(negative),
                 anchor['target'])
 
-def split_data(csv_path, benign_fraction=0.2, seed=None):
+def split_data(csv_path, benign_fraction=1.0, seed=None):
     """
     Split the dataset while using a fraction of benign images.
 
@@ -74,8 +100,7 @@ def split_data(csv_path, benign_fraction=0.2, seed=None):
 
     return train_samples, test_samples, val_samples
 
-
-def get_dataloaders(benign_fraction=0.2, seed=None):
+def get_dataloaders(benign_fraction=1.0, seed=None):
     """
     Returns train, test, val dataloaders.
     benign_fraction: fraction of benign images to use in training
@@ -86,21 +111,13 @@ def get_dataloaders(benign_fraction=0.2, seed=None):
     train_samples, test_samples, val_samples = split_data(csv_path,
                                                     benign_fraction, seed=seed)
 
-    transform = transforms.Compose([
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomVerticalFlip(),
-        transforms.RandomRotation(15),
-        transforms.ToTensor(),
-        transforms.Normalize([0.5] * 3, [0.5] * 3)
-    ])
-
-    train_loader = DataLoader(ISICDataset(image_root, train_samples, transform),
+    train_loader = DataLoader(ISICDataset(image_root, train_samples),
                               batch_size=BATCH_SIZE, shuffle=True,
                               num_workers=WORKERS)
-    test_loader = DataLoader(ISICDataset(image_root, test_samples, transform),
+    test_loader = DataLoader(ISICDataset(image_root, test_samples),
                              batch_size=BATCH_SIZE, shuffle=False,
                              num_workers=WORKERS)
-    val_loader = DataLoader(ISICDataset(image_root, val_samples, transform),
+    val_loader = DataLoader(ISICDataset(image_root, val_samples),
                             batch_size=BATCH_SIZE, shuffle=False,
                             num_workers=WORKERS)
 
