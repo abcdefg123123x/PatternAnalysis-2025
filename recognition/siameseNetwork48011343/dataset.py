@@ -1,3 +1,16 @@
+"""
+dataset.py
+
+Handles loading, preprocessing, and augmentation of the ISIC 2020 Kaggle
+Challenge dataset. Supports triplet sampling for Siamese network training and
+allows fraction-based selection of benign images.
+
+Note:
+    - benign_fraction: Default is 1.0 to use all benign images, and effectively
+      all images are being used. This ensures full dataset utilisation but
+      increases computational cost.
+"""
+
 import os
 import random
 import pandas as pd
@@ -21,7 +34,7 @@ base_transform = transforms.Compose([
     transforms.Normalize([0.5] * 3, [0.5] * 3)
 ])
 
-# Apply strong transforms for malignant images
+# Apply strong transforms for malignant images to handle class imbalance
 malignant_transform = transforms.Compose([
     transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip(),
@@ -35,27 +48,72 @@ malignant_transform = transforms.Compose([
 ])
 
 class ISICDataset(Dataset):
-    """Dataset for ISIC 2020 Kaggle Challenge (triplet sampling)"""
+    """
+    PyTorch Dataset for the ISIC 2020 Kaggle Challenge.
+
+    Implements triplet sampling:
+        - anchor: a random image from the dataset
+        - positive: a random image of the same class as the anchor
+        - negative: a random image of a different class
+    """
     def __init__(self, image_root, samples):
+        """
+        Intialise the dataset.
+
+        Args:
+            image_root (str): Path to folder containing the images.
+            samples (list of dict): Metadata samples, each with 'isic_id' and
+            'target'.
+        """
         self.image_root = image_root
         self.samples = samples
 
     def __len__(self):
+        """Returns the total number of samples in the dataset"""
         return len(self.samples)
 
     def __getitem__(self, idx):
+        """
+        Returns a triplet (anchor, positive, negative) along with the label of
+        the anchor.
+
+        Args:
+            idx (int): Index of the anchor sample.
+
+        Returns:
+            tuple: (anchor_img, positive_img, negative_img, label)
+                - anchor_img (Tensor)
+                - positive_img (Tensor)
+                - negative_img (Tensor)
+                - label (int)
+        """
         anchor = self.samples[idx]
+
+        # Select positive sample (same class)
         positive = random.choice(self.samples)
         while positive['target'] != anchor['target']:
             positive = random.choice(self.samples)
+
+        # Select negative sample (different class)
         negative = random.choice(self.samples)
         while negative ['target'] == anchor['target']:
             negative = random.choice(self.samples)
 
         def load_img(sample):
+            """
+            Load and transform an image sample.
+
+            Args:
+                sample (dict): Metadata dictionary containing 'isic_id' and
+                'target'.
+
+            Returns:
+                Tensor: Transformed image
+            """
             img = Image.open(os.path.join(self.image_root,
                                           sample['isic_id'] + ".jpg")).convert(
                 'RGB')
+
             # Apply stronger augmentations for malignant images
             if sample['target'] == 1:
                 return malignant_transform(img)
@@ -67,23 +125,29 @@ class ISICDataset(Dataset):
 
 def split_data(csv_path, benign_fraction=1.0, seed=None):
     """
-    Split the dataset while using a fraction of benign images.
+    Split the dataset into training, testing, and validation sets.
 
-    Arguments:
-        csv_path: path to CSV metadata
-        benign_fraction: float (0,1] - fraction of benign images to keep
-        seed: int - random seed for reproducibility
+    Keeps all malignant images and allows fraction-based selection of benign
+    images.
+
+    Args:
+        csv_path (str): Path to CSV file with dataset metadata.
+        benign_fraction (float, 0-1]: Fraction of benign images to include.
+        seed (int, optional): A seed for reproducibility.
+
+    Returns:
+        tuple: (train_samples, test_samples, val_samples) as a list of dicts.
     """
     if seed is not None:
         random.seed(seed)
         pd.np.random.seed(seed)
 
     df = pd.read_csv(csv_path)
-    malignant = df[df['target'] == 1].copy()  # keep all malignant images
+    malignant = df[df['target'] == 1].copy()  # Keep all malignant images
     benign = df[
-        df['target'] == 0].copy()  # keep all benign initially
+        df['target'] == 0].copy()  # Keep all benign initially
 
-    # Keep only a fraction of benign images
+    # Keep the desired fraction of benign images
     n_benign = int(len(benign) * benign_fraction)
     benign = benign.sample(n=n_benign, random_state=seed)
 
@@ -102,9 +166,14 @@ def split_data(csv_path, benign_fraction=1.0, seed=None):
 
 def get_dataloaders(benign_fraction=1.0, seed=None):
     """
-    Returns train, test, val dataloaders.
-    benign_fraction: fraction of benign images to use in training
-    seed: random seed for reproducibility
+    Create DataLoader objects for train, test, and validation sets.
+
+    Args:
+        benign_fraction (float): Fraction of benign images to include.
+        seed (int, optional): A seed for reproducibility.
+
+    Returns:
+        tuple: (train_loader, test_loader, val_loader) as DataLoader objects.
     """
     image_root = "./ISIC_2020_Training_JPEG"
     csv_path = "./train-metadata.csv"
