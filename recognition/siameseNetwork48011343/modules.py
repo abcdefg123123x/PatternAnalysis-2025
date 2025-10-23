@@ -28,7 +28,6 @@ class SiameseNetwork(nn.Module):
     into a lower-dimensional, normalised embedding suitable for triplet loss
     training.
     """
-
     def __init__(self):
         """
         Initialise Siamese Network.
@@ -97,7 +96,6 @@ class BinaryClassifier(nn.Module):
         128 → 512 → 256 → 64 → 2
     Includes BatchNorm and Dropout to improve generalisation.
     """
-
     def __init__(self, in_features=128):
         """
         Initialise Binary Classifier.
