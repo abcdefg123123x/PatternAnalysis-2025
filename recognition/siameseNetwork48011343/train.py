@@ -34,7 +34,7 @@ from utils import (plot_tsne, plot_metrics, save_confusion_matrix,
                    compute_roc_auc)
 
 # Hyperparameters
-EPOCHS_SIAMESE = 40
+EPOCHS_SIAMESE = 30
 EPOCHS_CLASSIFIER = 25
 LR_SIAMESE = 1e-4
 LR_CLASSIFIER = 5e-4
