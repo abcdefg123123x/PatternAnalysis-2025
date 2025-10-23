@@ -1,3 +1,26 @@
+"""
+train.py
+
+Main training script for the ISIC 2020 binary classification task using a
+Siamese network for feature extraction and a binary classifier for malignant vs
+benign skin lesion classification.
+
+Pipeline:
+    1. Train Siamese network using triplet loss on image triplets.
+    2. Extract embeddings from trained Siamese model.
+    3. Train binary classifier on embeddings using cross-entropy loss.
+    4. Evaluate both models and generate plots:
+        - Training/validation loss and accuracy
+        - Confusion matrix
+        - ROC curve and AUC
+        - t-SNE embeddings for feature visualisation
+
+Outputs:
+    - Model checkpoints (./checkpoints/)
+    - Evaluation plots (loss curves, ROC, confusion matrix, t-SNE)
+    - Test metrics printed to console
+"""
+
 import os
 import random
 import numpy as np
@@ -17,7 +40,7 @@ LR_SIAMESE = 1e-4
 LR_CLASSIFIER = 5e-4
 
 # Generate or fix a seed for reproducibility
-seed = 100 # generate a random one with random.randint(0, 2**32 - 1)
+seed = 115 # generate a random one with random.randint(0, 2**32 - 1)
 print(f"Using the following seed for reproducibility: {seed}")
 
 random.seed(seed)
@@ -29,9 +52,22 @@ torch.backends.cudnn.benchmark = False
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# ====================
 # Helper functions
+# ====================
 def compute_siamese_accuracy(model, loader, device):
-    """Fraction of triplets where anchor is closer to positive than negative"""
+    """
+    Compute the fraction of triplets where the anchor is closer to the positive
+    image than the negative.
+
+    Args:
+        model (nn.Module): Trained Siamese network.
+        loader (DataLoader): DataLoader providing triplet batches.
+        device (torch.device): CPU or GPU device.
+
+    Returns:
+        float: Fraction of correctly ranked triplets.
+    """
     correct, total = 0, 0
     model.eval()
     with torch.no_grad():
@@ -45,7 +81,18 @@ def compute_siamese_accuracy(model, loader, device):
         return correct / total
 
 def compute_siamese_val_loss(model, loader, loss_fn, device):
-    """Calculates validation triplet loss."""
+    """
+    Compute average validation loss for the Siamese network.
+
+    Args:
+        model (nn.Module): Siamese network.
+        loader (DataLoader): Validation DataLoader.
+        loss_fn (nn.Module): Triplet loss function.
+        device (torch.device): CPU or GPU device.
+
+    Returns:
+        float: Mean validation loss.
+    """
     model.eval()
     val_loss_total = 0
     with torch.no_grad():
@@ -56,7 +103,17 @@ def compute_siamese_val_loss(model, loader, loss_fn, device):
     return val_loss_total / len(loader)
 
 def extract_features_labels(model, loader, device):
-    """Extract embeddings and labels from the Siamese network."""
+    """
+    Extract embeddings and corresponding labels from the Siamese network.
+
+    Args:
+        model (nn.Module): Trained Siamese network.
+        loader (DataLoader): DataLoader providing images and labels.
+        device (torch.device): CPU or GPU device.
+
+    Returns:
+        tuple[list[Tensor], list[Tensor]]: Lists of feature tensors and labels.
+    """
     features_list, labels_list = [], []
     model.eval()
     with torch.no_grad():
@@ -66,9 +123,19 @@ def extract_features_labels(model, loader, device):
             labels_list.append(labels.to(device))
     return features_list, labels_list
 
-
 def evaluate_classifier(classifier, features, labels, loss_fn):
-    """Compute classifier loss and accuracy."""
+    """
+    Evaluate binary classifier performance on a feature set.
+
+    Args:
+        classifier (nn.Module): Trained binary classifier.
+        features (list[Tensor]): List of embedding batches.
+        labels (list[Tensor]): Corresponding label batches.
+        loss_fn (nn.Module): Cross-entropy loss function.
+
+    Returns:
+        tuple[float, float]: Mean loss and accuracy across all batches.
+    """
     classifier.eval()
     total_loss = 0
     correct, total = 0, 0
@@ -81,9 +148,27 @@ def evaluate_classifier(classifier, features, labels, loss_fn):
             total += lbls.size(0)
     return total_loss / len(features), correct / total
 
+# ====================
 # Training functions
+# ====================
 def train_siamese(model, train_loader, val_loader, loss_fn, optimiser,
                   epochs, device, save_path="checkpoints/best_siamese.pth"):
+    """
+    Train the Siamese network using triplet loss.
+
+    Args:
+        model (nn.Module): Siamese network.
+        train_loader (DataLoader): Training DataLoader.
+        val_loader (DataLoader): Validation DataLoader.
+        loss_fn (nn.Module): TripletMarginLoss instance.
+        optimiser (torch.optim.Optimizer): Optimiser for training.
+        epochs (int): Number of training epochs.
+        device (torch.device): CPU or GPU device.
+        save_path (str): Path to save best model weights.
+
+    Returns:
+        tuple: Lists of training/validation losses and accuracies.
+    """
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     best_val_acc = 0.0
     train_losses, val_losses = [], []
@@ -93,16 +178,20 @@ def train_siamese(model, train_loader, val_loader, loss_fn, optimiser,
         model.train()
         total_loss = 0
         loop = tqdm(train_loader, desc=f"Siamese Epoch {epoch+1}/{epochs}")
+
         for anchor, pos, neg, _ in loop:
             anchor, pos, neg = anchor.to(device), pos.to(device), neg.to(device)
+
             optimiser.zero_grad()
             a_feat, p_feat, n_feat = model(anchor, pos, neg)
             loss = loss_fn(a_feat, p_feat, n_feat)
             loss.backward()
             optimiser.step()
             total_loss += loss.item()
+
             loop.set_postfix(loss=total_loss / (loop.n + 1))
 
+        # Compute metrics for training and validation)
         train_losses.append(total_loss / len(train_loader))
         train_acc = compute_siamese_accuracy(model, train_loader, device)
         val_loss = compute_siamese_val_loss(model, val_loader, loss_fn, device)
@@ -111,7 +200,7 @@ def train_siamese(model, train_loader, val_loader, loss_fn, optimiser,
         train_accs.append(train_acc)
         val_accs.append(val_acc)
 
-        # Save Siamese model based on highest validation accuracy
+        # Save best Siamese model based on highest validation accuracy
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             torch.save(model.state_dict(), save_path)
@@ -126,6 +215,21 @@ def train_siamese(model, train_loader, val_loader, loss_fn, optimiser,
 def train_classifier(classifier, features_train, labels_train,
                      features_val, labels_val, loss_fn, optimiser, epochs,
                      save_path="checkpoints/best_classifier.pth"):
+    """
+    Train the binary classifier on embeddings from the Siamese network.
+
+    Args:
+        classifier (nn.Module): Binary classifier model.
+        features_train, labels_train: Training features and labels.
+        features_val, labels_val: Validation features and labels.
+        loss_fn (nn.Module): CrossEntropyLoss instance.
+        optimiser (torch.optim.Optimizer): Optimiser for training.
+        epochs (int): Number of training epochs.
+        save_path (str): Path to save best classifier weights.
+
+    Returns:
+        tuple: Lists of training/validation losses and accuracies.
+    """
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     best_val_acc = 0.0
     train_losses, val_losses = [], []
@@ -134,24 +238,30 @@ def train_classifier(classifier, features_train, labels_train,
     for epoch in range(epochs):
         classifier.train()
         total_loss, correct_train, total_train = 0, 0, 0
+
         loop = tqdm(zip(features_train, labels_train),
                     total=len(features_train),
                     desc=f"Classifier Epoch {epoch+1}/{epochs}")
+
         for feats, labels in loop:
             optimiser.zero_grad()
-            out = classifier(feats) # features from Siamese network
+            out = classifier(feats)
             loss = loss_fn(out, labels)
             loss.backward()
             optimiser.step()
             total_loss += loss.item()
+
             preds = out.argmax(dim=1)
             correct_train += (preds == labels).sum().item()
             total_train += labels.size(0)
+
             loop.set_postfix(loss=total_loss / (loop.n + 1),
                              acc=correct_train / total_train)
 
+        # Validation evaluation
         val_loss, val_acc = evaluate_classifier(classifier, features_val,
                                                 labels_val, loss_fn)
+
         train_losses.append(total_loss / len(features_train))
         val_losses.append(val_loss)
         train_accs.append(correct_train / total_train)
@@ -165,32 +275,33 @@ def train_classifier(classifier, features_train, labels_train,
                 f"Saved best Classifier model with val_acc: {best_val_acc:.4f}")
 
         print(f"Classifier Epoch {epoch + 1}/{epochs} - "
-              f"Train Loss: {train_losses[-1]:.4f}, Train Acc: {train_accs[-1]:.4f} - "
+              f"Train Loss: {train_losses[-1]:.4f}, \
+              Train Acc: {train_accs[-1]:.4f} - "
               f"Val Loss: {val_losses[-1]:.4f}, Val Acc: {val_accs[-1]:.4f}")
 
     return train_losses, val_losses, train_accs, val_accs
 
 if __name__ == "__main__":
-    # Dataloaders
+    # Load the data loaders
     train_loader, test_loader, val_loader = get_dataloaders()
 
-    # Models
+    # Initialise the models
     siamese = SiameseNetwork().to(device)
     classifier = BinaryClassifier().to(device)
 
-    # Losses and optimisers
+    # Define losses and optimisers
     triplet_loss = TripletMarginLoss(margin=1.0)
     cross_entropy = CrossEntropyLoss()
     optimiser_siamese = Adam(siamese.parameters(), lr=LR_SIAMESE)
     optimiser_classifier = Adam(classifier.parameters(), lr=LR_CLASSIFIER)
 
-    # Train Siamese Network
+    # Train the Siamese network
     (siamese_train_losses, siamese_val_losses, siamese_train_accs,
      siamese_val_accs) = train_siamese(siamese, train_loader, val_loader,
                                         triplet_loss, optimiser_siamese,
                                        EPOCHS_SIAMESE, device)
 
-    # Plot Siamese metrics
+    # Plot Siamese training metrics
     plot_metrics(siamese_train_losses, siamese_val_losses,
                  siamese_train_accs, siamese_val_accs,
                  save_path_prefix="checkpoints/siamese_metrics",
@@ -199,7 +310,7 @@ if __name__ == "__main__":
     # Load the best Siamese network before feature extraction
     siamese.load_state_dict(torch.load("checkpoints/best_siamese.pth"))
 
-    # Extract features from Siamese network
+    # Extract features and embeddings from Siamese network
     train_features, train_labels = extract_features_labels(siamese,
                                                            train_loader, device)
     val_features, val_labels = extract_features_labels(siamese, val_loader,
@@ -207,7 +318,7 @@ if __name__ == "__main__":
     test_features, test_labels = extract_features_labels(siamese, test_loader,
                                                          device)
 
-    # Plot t-SNE embeddings (saved as PNGs)
+    # Plot t-SNE embeddings for visualisations (saved as PNGs)
     plot_tsne(train_features, train_labels,
               save_path="checkpoints/train_embeddings_tsne.png",
               title="Train Set t-SNE Embeddings")
@@ -220,14 +331,14 @@ if __name__ == "__main__":
               save_path="checkpoints/test_embeddings_tsne.png",
               title="Test Set t-SNE Embeddings")
 
-    # Train binary classifier
+    # Train the binary classifier
     (classifier_train_losses, classifier_val_losses, classifier_train_accs,
      classifier_val_accs) = train_classifier(
         classifier, train_features, train_labels, val_features, val_labels,
         cross_entropy, optimiser_classifier, EPOCHS_CLASSIFIER
     )
 
-    # Plot Classifier metrics
+    # Plot classifier metrics
     plot_metrics(classifier_train_losses, classifier_val_losses,
                  classifier_train_accs, classifier_val_accs,
                  save_path_prefix="checkpoints/classifier_metrics",
@@ -241,10 +352,8 @@ if __name__ == "__main__":
                                               test_labels, cross_entropy)
     print(f"Test Accuracy: {100 * test_acc:.2f}%")
 
-    # Save and print confusion matrix
+    # Save confusion matrix and ROC/AUC metrics
     cm = save_confusion_matrix(classifier, test_features, test_labels,
                                save_path="checkpoints/test_conf_matrix.png")
-
-    # Compute ROC, AUC, Sensitivity, Specificity, and save ROC plot
     metrics = compute_roc_auc(classifier, test_features, test_labels,
                               save_path="checkpoints/test_roc_curve.png")
