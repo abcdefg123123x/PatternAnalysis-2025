@@ -87,7 +87,7 @@ def main():
                                                         sample_loader, device)
 
     # Evaluate classifier performance from here onwards
-    print("Evaluating Binary Classifier on test embeddings:")
+    print("Evaluating Binary Classifier on sample embeddings:")
 
     # Confusion matrix
     cm = save_confusion_matrix(classifier, predict_features, predict_labels,
@@ -110,10 +110,10 @@ def main():
     print(f" Specificity: {metrics['Specificity']:.4f}")
 
     # Visualise embeddings using t-SNE
-    print("\nGenerating t-SNE visualisation for test embeddings...")
+    print("\nGenerating t-SNE visualisation for sample embeddings...")
     plot_tsne(predict_features, predict_labels,
               save_path="checkpoints/PREDICT_embeddings_tsne_predict.png",
-              title="t-SNE of Test Embeddings (Predict Phase)")
+              title="t-SNE of sample Embeddings (Predict Phase)")
 
     print("\nPrediction completed. Outputs saved in ./checkpoints/")
 
