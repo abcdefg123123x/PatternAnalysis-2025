@@ -1,3 +1,15 @@
+"""
+utils.py
+
+Utility functions for model evaluation, visualisation, and metric computation.
+
+Includes:
+    - Training/validation metric plotting
+    - Confusion matrix generation and visualisation
+    - t-SNE visualisation of learned feature embeddings
+    - ROC/AUC computation with sensitivity and specificity metrics
+"""
+
 import os
 import torch
 import numpy as np
@@ -9,10 +21,24 @@ from sklearn.metrics import (confusion_matrix, ConfusionMatrixDisplay,
 def plot_metrics(train_losses, val_losses, train_accs, val_accs,
                  save_path_prefix="checkpoints/metrics", title="Model"):
     """
-    Plot training/validation loss and accuracy curves and save as PNG.
+    Plot training and validation loss and accuracy over epochs.
+
+    Args:
+        train_losses (list[float]): Training loss per epoch.
+        val_losses (list[float]): Validation loss per epoch.
+        train_accs (list[float]): Training accuracy per epoch.
+        val_accs (list[float]): Validation accuracy per epoch.
+        save_path_prefix (str): Base path (without extension) to save figures.
+        title (str): Model or experiment title to include in plot titles.
+
+    Saves:
+        - "<save_path_prefix>_loss.png": Loss curve.
+        - "<save_path_prefix>_accuracy.png": Accuracy curve.
     """
+    # Ensure save directory exists
     os.makedirs(os.path.dirname(save_path_prefix), exist_ok=True)
 
+    # Generate x-axis as epoch indicies
     epochs = np.arange(1, len(train_losses) + 1)
 
     # Plot Loss
@@ -41,10 +67,26 @@ def plot_metrics(train_losses, val_losses, train_accs, val_accs,
 
 def save_confusion_matrix(classifier, features, labels,
                           save_path="conf_matrix.png"):
-    """Compute, save, and print confusion matrix for classifier."""
+    """
+    Compute and save the confusion matrix for a trained classifier.
+
+    Args:
+        classifier (torch.nn.Module): Trained model used for prediction.
+        features (list[torch.Tensor]): Batched input feature tensors.
+        labels (list[torch.Tensor]): Batched ground truth label tensors.
+        save_path (str): Path to save the confusion matrix plot.
+
+    Returns:
+        np.ndarray: The computed confusion matrix.
+
+    Saves:
+        - A confusion matrix PNG to `save_path`.
+    """
     classifier.eval()
     all_preds = []
     all_labels = []
+
+    # Perform inference batch by batch
     with torch.no_grad():
         for feats, lbls in zip(features, labels):
             out = classifier(feats)
@@ -52,47 +94,52 @@ def save_confusion_matrix(classifier, features, labels,
             all_preds.append(preds.cpu())
             all_labels.append(lbls.cpu())
 
+    # Concatenate all predictions and labels
     all_preds = torch.cat(all_preds).numpy()
     all_labels = torch.cat(all_labels).numpy()
 
     # Compute confusion matrix
     cm = confusion_matrix(all_labels, all_preds)
 
-    # Save as an image
+    # Display and save confusion matrix as image
     disp = ConfusionMatrixDisplay(cm)
     disp.plot(cmap=plt.cm.Blues)
     plt.title("Test Set Confusion Matrix")
     plt.savefig(save_path)
-    plt.close()  # Close to free memory
+    plt.close()
 
-    # Print a text version
+    # Print text version of matrix for quick inspection
     print("Confusion Matrix (test set):")
     print(cm)
-    return cm
 
+    return cm
 
 def plot_tsne(features_list, labels_list,
               save_path="checkpoints/tsne_plot.png", title="t-SNE Embeddings"):
     """
-    Plot t-SNE of embeddings and save as PNG.
+    Visualise high-dimensional feature embeddings using t-SNE.
 
-    features_list: list of torch tensors (embeddings)
-    labels_list: list of torch tensors (labels)
-    save_path: file path to save the figure
+    Args:
+        features_list (list[torch.Tensor]): Batched feature tensors.
+        labels_list (list[torch.Tensor]): Corresponding label tensors.
+        save_path (str): Path to save the t-SNE visualisation.
+        title (str): Title for the plot.
+
+    Saves:
+        - A t-SNE scatter plot of embeddings, colour-coded by class.
     """
-    import os
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
-    # Combine batches
+    # Merge all batches into single numpy arrays
     features_tensor = torch.cat(features_list).cpu().numpy()
     labels_tensor = torch.cat(labels_list).cpu().numpy()
 
-    # Run t-SNE
+    # Compute 2D t-SNE embeddings
     tsne = TSNE(n_components=2, perplexity=30, learning_rate=200,
                 random_state=100)
     features_2d = tsne.fit_transform(features_tensor)
 
-    # Plot
+    # Plot the t-SNE projection
     plt.figure(figsize=(8, 8))
     for label in np.unique(labels_tensor):
         idx = labels_tensor == label
@@ -109,31 +156,46 @@ def plot_tsne(features_list, labels_list,
 def compute_roc_auc(classifier, features, labels,
                     save_path="checkpoints/roc_curve.png"):
     """
-    Compute ROC curve, AUC, sensitivity, and specificity.
-    Saves ROC plot and prints metrics.
+    Compute and plot the ROC curve, AUC, sensitivity, and specificity.
+
+    Args:
+        classifier (torch.nn.Module): Trained binary classifier.
+        features (list[torch.Tensor]): Batched input feature tensors.
+        labels (list[torch.Tensor]): Batched ground truth label tensors.
+        save_path (str): Path to save the ROC plot.
+
+    Returns:
+        dict: {
+            "AUC": float,
+            "Sensitivity": float,
+            "Specificity": float
+        }
+
+    Saves:
+        - ROC curve PNG at `save_path`.
     """
-    import os
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
     classifier.eval()
     all_probs = []
     all_labels = []
 
+    # Collect predicted probabilities for positive class
     with torch.no_grad():
         for feats, lbls in zip(features, labels):
             out = classifier(feats)
-            probs = torch.softmax(out, dim=1)[:, 1]  # probability for pos class
+            probs = torch.softmax(out, dim=1)[:, 1]  # Pos class probability
             all_probs.append(probs.cpu())
             all_labels.append(lbls.cpu())
 
     all_probs = torch.cat(all_probs).numpy()
     all_labels = torch.cat(all_labels).numpy()
 
-    # ROC and AUC
+    # Compute ROC and AUC
     fpr, tpr, _ = roc_curve(all_labels, all_probs)
     roc_auc = auc(fpr, tpr)
 
-    # Compute confusion matrix for sensitivity/specificity
+    # Compute sensitivity and specificity
     preds = (all_probs >= 0.5).astype(int)
     cm = confusion_matrix(all_labels, preds)
     tn, fp, fn, tp = cm.ravel()
@@ -141,7 +203,7 @@ def compute_roc_auc(classifier, features, labels,
     sensitivity = tp / (tp + fn) if (tp + fn) > 0 else 0.0
     specificity = tn / (tn + fp) if (tn + fp) > 0 else 0.0
 
-    # Save ROC plot
+    # Save the plotted ROC curve
     plt.figure()
     plt.plot(fpr, tpr, color="darkorange", lw=2,
              label=f"ROC curve (AUC = {roc_auc:.2f})")
@@ -154,6 +216,7 @@ def compute_roc_auc(classifier, features, labels,
     plt.savefig(save_path)
     plt.close()
 
+    # Print summary metrics
     print(f"\nROC and AUC Results:")
     print(f" - AUC: {roc_auc:.4f}")
     print(f" - Sensitivity (Recall for positive): {sensitivity:.4f}")
