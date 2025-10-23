@@ -17,8 +17,8 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Running inference on device: {device}")
 
-    # Load the test dataloader
-    _, test_loader, _ = get_dataloaders()
+    # Load sample data
+    _, _, sample_loader = get_dataloaders()
 
     # Load trained models
     siamese_path = "checkpoints/best_siamese.pth"
@@ -34,18 +34,18 @@ def main():
     classifier.eval()
 
     # Feature extraction
-    test_features, test_labels = extract_features_labels(siamese, test_loader,
-                                                         device)
+    predict_features, predict_labels = extract_features_labels(siamese,
+                                                        sample_loader, device)
 
     # Evaluation
     print("Evaluating Binary Classifier on test embeddings:")
 
-    cm = save_confusion_matrix(classifier, test_features, test_labels,
-                        save_path="checkpoints/predict_confusion_matrix.png")
+    cm = save_confusion_matrix(classifier, predict_features, predict_labels,
+                        save_path="checkpoints/PREDICT_confusion_matrix.png")
 
     # Compute ROC, AUC, Sensitivity, Specificity
-    metrics = compute_roc_auc(classifier, test_features, test_labels,
-                              save_path="checkpoints/predict_roc_curve.png")
+    metrics = compute_roc_auc(classifier, predict_features, predict_labels,
+                              save_path="checkpoints/PREDICT_roc_curve.png")
 
     # Calculate test accuracy from confusion matrix
     tn, fp, fn, tp = cm.ravel()
@@ -60,8 +60,8 @@ def main():
 
     # t-SNE visualisation of embeddings
     print("\nGenerating t-SNE visualization for test embeddings...")
-    plot_tsne(test_features, test_labels,
-              save_path="checkpoints/predict_embeddings_tsne_predict.png",
+    plot_tsne(predict_features, predict_labels,
+              save_path="checkpoints/PREDICT_embeddings_tsne_predict.png",
               title="t-SNE of Test Embeddings (Predict Phase)")
 
     print("\nPrediction completed. Outputs saved in ./checkpoints/")
