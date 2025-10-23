@@ -66,7 +66,8 @@ def plot_metrics(train_losses, val_losses, train_accs, val_accs,
     plt.close()
 
 def save_confusion_matrix(classifier, features, labels,
-                          save_path="conf_matrix.png"):
+                          save_path="conf_matrix.png",
+                          title="Test Set Confusion Matrix"):
     """
     Compute and save the confusion matrix for a trained classifier.
 
@@ -75,6 +76,8 @@ def save_confusion_matrix(classifier, features, labels,
         features (list[torch.Tensor]): Batched input feature tensors.
         labels (list[torch.Tensor]): Batched ground truth label tensors.
         save_path (str): Path to save the confusion matrix plot.
+        title (str): Title to display on the confusion matrix plot.
+                     Defaults to "Test Set Confusion Matrix"
 
     Returns:
         np.ndarray: The computed confusion matrix.
@@ -104,12 +107,12 @@ def save_confusion_matrix(classifier, features, labels,
     # Display and save confusion matrix as image
     disp = ConfusionMatrixDisplay(cm)
     disp.plot(cmap=plt.cm.Blues)
-    plt.title("Test Set Confusion Matrix")
+    plt.title(title)
     plt.savefig(save_path)
     plt.close()
 
     # Print text version of matrix for quick inspection
-    print("Confusion Matrix (test set):")
+    print(f"{title}:")
     print(cm)
 
     return cm

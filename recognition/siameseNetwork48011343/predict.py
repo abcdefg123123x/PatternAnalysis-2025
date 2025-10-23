@@ -91,7 +91,8 @@ def main():
 
     # Confusion matrix
     cm = save_confusion_matrix(classifier, predict_features, predict_labels,
-                        save_path="checkpoints/PREDICT_confusion_matrix.png")
+                        save_path="checkpoints/PREDICT_confusion_matrix.png",
+                               title="Sample Set Confusion Matrix")
 
     # ROC, AUC, Sensitivity, Specificity
     metrics = compute_roc_auc(classifier, predict_features, predict_labels,

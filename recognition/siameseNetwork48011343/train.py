@@ -354,6 +354,7 @@ if __name__ == "__main__":
 
     # Save confusion matrix and ROC/AUC metrics
     cm = save_confusion_matrix(classifier, test_features, test_labels,
-                               save_path="checkpoints/test_conf_matrix.png")
+                               save_path="checkpoints/test_conf_matrix.png",
+                               title="Test Set Confusion Matrix")
     metrics = compute_roc_auc(classifier, test_features, test_labels,
                               save_path="checkpoints/test_roc_curve.png")
