@@ -110,7 +110,7 @@ def main():
     print(f" Specificity: {metrics['Specificity']:.4f}")
 
     # Visualise embeddings using t-SNE
-    print("\nGenerating t-SNE visualization for test embeddings...")
+    print("\nGenerating t-SNE visualisation for test embeddings...")
     plot_tsne(predict_features, predict_labels,
               save_path="checkpoints/PREDICT_embeddings_tsne_predict.png",
               title="t-SNE of Test Embeddings (Predict Phase)")
