@@ -58,7 +58,38 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
     - Output: Two logits corresponding to benign and malignant cases.
     - Loss function: Cross-entropy loss is used to train the classifier, comparing predicted logits against ground-truth labels.
     - Optimiser: Adam optimiser is applied to update classifier parameters.
+   
+# Dependencies and Reproducibility
+The main dependencies required are:
+   - pandas: 2.3.2
+   - numpy: 1.24.4
+   - Pillow: 11.1.0
+   - torch: 2.5.1
+   - torchvision: 0.20.1
+   - matplotlib: 3.10.5
+   - scikit-learn: 1.7.1
+   - tqdm: 4.67.1  
+
+This project is designed to have reproducible results. All sources of randomness are seeded with `115` in `train.py`:  
+```python
+seed = 115
+import random, numpy as np, torch
+
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+```
+Doing this ensures reproducible results across:
+   - Dataset splits (train/test/validaiton)
+   - Triplet sampling in the Siamese dataset
+   - Data augmentations (rotations, flip, colour jitter, affine transforms)
+   - Model weight initialisation and training
+
     
+
 
 
 
