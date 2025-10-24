@@ -25,7 +25,8 @@ from utils import save_confusion_matrix, compute_roc_auc, plot_tsne
 
 def extract_features_labels(model, loader, device):
     """
-    Extract feature embeddings and labels from a dataloader using a Siamese network.
+    Extract feature embeddings and labels from a dataloader using a Siamese
+    network.
 
     Args:
         model (nn.Module): Trained Siamese model (feature extractor).
@@ -54,7 +55,8 @@ def main():
     Main entry point for prediction and evaluation.
 
     Loads pre-trained Siamese and Binary Classifier models, performs inference
-    on the validation (sample) dataset, computes key metrics, and generates plots.
+    on the validation (sample) dataset, computes key metrics, and generates
+    plots.
 
     Outputs:
         - Confusion matrix (PNG)
