@@ -101,7 +101,7 @@ def main():
     # Calculate test (validation) accuracy from confusion matrix
     tn, fp, fn, tp = cm.ravel()
     test_acc = (tp + tn) / (tp + tn + fp + fn)
-    print(f" Test Accuracy: {test_acc * 100:.2f}%")
+    print(f" Accuracy on sample data: {test_acc * 100:.2f}%")
 
     # Print summary metrics
     print("\nEvaluation Summary:")
