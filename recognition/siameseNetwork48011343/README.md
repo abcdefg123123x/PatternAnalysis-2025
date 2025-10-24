@@ -7,7 +7,7 @@ Melanoma detection from dermoscopic images is a critical medical task due to the
 ## Algorithm Description
 This implemented algorithm follows a two-stage deep learning pipeline combining metric learning and supervised classification.
 
-1. Siamese Feature Extraction (stage 1):
+1. **Siamese Feature Extraction (stage 1)**
    - A Siamese network based on ResNet 34 processes image triplets:
      - Anchor (a reference image)
      - Positive (same class as anchor)
@@ -16,30 +16,35 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
    - A triplet loss is applied, encouraging embeddings of the same class to be close together and embeddings of different classes to be far apart.
    - This stage learns a discriminative feature space, making lesions of the same type cluster together.
 
-2. Binary Classification (stage 2):
+2. **Binary Classification (stage 2)**
    - The learned embeddings are fed into a binary classifier network (a multi-layer perception with BatchNorm and Dropout).
    - It outputs logits for benign and malignant classes.
    - This classifier is trained using standard cross-entropy loss, using embeddings from the trained Siamese model.
   
-3. Evaluation and Visualisation:
+3. **Evaluation and Visualisation**
    - During prediction, the Siamese model generates embeddings for the validation subset.
    - The classifier then predicts class probabilities, and performance is measured using metrics such as accuracy, AUC, sensitivity, and specificity.
    - The learned feature is visualised using t-SNE, showing how benign and malignant images form distinct clusters.
 
 ### Network Architecture
-  - Embedding Network (Siamese backbone)
+  - **Embedding Network (Siamese backbone)**
+    ![Siamese Network](https://github.com/user-attachments/assets/648f4776-fcf1-4edb-a690-1bb6915bf659)
     - Base model: ResNet 34 backbone pre-trained for general image feature extraction.
     - Projection head: Three fully connected layers (512 &rarr; 512 &rarr; 256 &rarr; 128).
     - Activation: ReLU applied after each layer.
     - Normalisation: L2 normalisation to constrain embeddings on the unit hypersphere.
     - Output: 128-dimensional embedding vector representing each input image.
-  - Training Strategy (triplet learning)
+  - **Training Strategy (triplet learning)**
     - Trained using triplet loss on *(anchor, positive, negative)* image sets.
     - Minimises distance between embeddings of similar lesions (benign-benign, malignant-malignant).
     - Maximises distance between embeddings of dissimilar lesions (benign-malignant).
-  - Classifier Head
+  - **Classifier Head**
+    ![Classifier](https://github.com/user-attachments/assets/fca3990c-142a-477b-a635-ebc998a0b2f6)
     - Input: 128-dimensional embeddings from the Siamese network.
     - Architecture: Fully connected layers (128 &rarr; 512 &rarr; 256 &rarr; 64 &rarr; 2).
     - Activation: ReLU after each hidden layer.
     - Regularisation: Batch normalisation and dropout for generalisation.
     - Output: Two logits corresponding to benign and malignant cases.
+
+
+
