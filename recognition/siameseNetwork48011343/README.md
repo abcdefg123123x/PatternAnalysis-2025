@@ -7,7 +7,7 @@ Melanoma detection from dermoscopic images is a critical medical task due to the
 ## Algorithm Description
 This implemented algorithm follows a two-stage deep learning pipeline combining metric learning and supervised classification.
 
-1. **Siamese Feature Extraction (stage 1)**
+1. **Siamese Feature Extraction (Stage 1)**
    - A Siamese network based on ResNet 34 processes image triplets:
      - Anchor (a reference image)
      - Positive (same class as anchor)
@@ -16,7 +16,7 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
    - A triplet loss is applied, encouraging embeddings of the same class to be close together and embeddings of different classes to be far apart.
    - This stage learns a discriminative feature space, making lesions of the same type cluster together.
 
-2. **Binary Classification (stage 2)**
+2. **Binary Classification (Stage 2)**
    - The learned embeddings are fed into a binary classifier network (a multi-layer perception with BatchNorm and Dropout).
    - It outputs logits for benign and malignant classes.
    - This classifier is trained using standard cross-entropy loss, using embeddings from the trained Siamese model.
@@ -34,10 +34,21 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
     - Activation: ReLU applied after each layer.
     - Normalisation: L2 normalisation to constrain embeddings on the unit hypersphere.
     - Output: 128-dimensional embedding vector representing each input image.
+    - Loss function: Triplet margin loss (`TripletMarginLoss`) for training on triplets.
+    - Optimiser: Adam optimiser applied to update Siamese network parameters.
+    
   - **Training Strategy (triplet learning)**
     - Trained using triplet loss on *(anchor, positive, negative)* image sets.
     - Minimises distance between embeddings of similar lesions (benign-benign, malignant-malignant).
     - Maximises distance between embeddings of dissimilar lesions (benign-malignant).
+    <img width="645" height="200" alt="triplet loss pic" src="https://github.com/user-attachments/assets/10f41aef-bf36-4939-931c-e439ff1bd065" />
+
+      Triplet loss equation ($\alpha$ is the margin, ***a*** anchor, ***p*** positive, ***n*** negative):
+   
+    <img width="398" height="59" alt="triplet loss eq" src="https://github.com/user-attachments/assets/42f6dbd9-442e-48a8-a839-5a8af2739499" />
+
+    A margin value of 1.0 was selected.
+
   - **Classifier Head**
     ![Classifier](https://github.com/user-attachments/assets/fca3990c-142a-477b-a635-ebc998a0b2f6)
     - Input: 128-dimensional embeddings from the Siamese network.
@@ -45,6 +56,10 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
     - Activation: ReLU after each hidden layer.
     - Regularisation: Batch normalisation and dropout for generalisation.
     - Output: Two logits corresponding to benign and malignant cases.
+    - Loss function: Cross-entropy loss is used to train the classifier, comparing predicted logits against ground-truth labels.
+    - Optimiser: Adam optimiser is applied to update classifier parameters.
+    
+
 
 
 
