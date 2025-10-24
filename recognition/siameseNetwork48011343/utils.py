@@ -77,19 +77,14 @@ def save_confusion_matrix(classifier, features, labels,
         labels (list[torch.Tensor]): Batched ground truth label tensors.
         save_path (str): Path to save the confusion matrix plot.
         title (str): Title to display on the confusion matrix plot.
-                     Defaults to "Test Set Confusion Matrix"
 
     Returns:
         np.ndarray: The computed confusion matrix.
-
-    Saves:
-        - A confusion matrix PNG to `save_path`.
     """
     classifier.eval()
     all_preds = []
     all_labels = []
 
-    # Perform inference batch by batch
     with torch.no_grad():
         for feats, lbls in zip(features, labels):
             out = classifier(feats)
@@ -97,22 +92,26 @@ def save_confusion_matrix(classifier, features, labels,
             all_preds.append(preds.cpu())
             all_labels.append(lbls.cpu())
 
-    # Concatenate all predictions and labels
     all_preds = torch.cat(all_preds).numpy()
     all_labels = torch.cat(all_labels).numpy()
 
     # Compute confusion matrix
     cm = confusion_matrix(all_labels, all_preds)
 
-    # Display and save confusion matrix as image
-    disp = ConfusionMatrixDisplay(cm)
+    # Define readable class names
+    class_names = ["Benign", "Malignant"]
+
+    # Display and save confusion matrix with class labels
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm,
+                                  display_labels=class_names)
     disp.plot(cmap=plt.cm.Blues)
     plt.title(title)
     plt.savefig(save_path)
     plt.close()
 
-    # Print text version of matrix for quick inspection
+    # Print text version with readable labels
     print(f"{title}:")
+    print(f"Labels: {class_names}")
     print(cm)
 
     return cm
