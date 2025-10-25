@@ -118,8 +118,8 @@ The dataset containing 33126 images was highly imbalanced. 32542 were of the ben
    <img width="650" height="450" alt="augs NONE" src="https://github.com/user-attachments/assets/5a2399f0-4119-48d2-ab8a-39b5f431ca5d" /> 
    <img width="650" height="450" alt="augs ON" src="https://github.com/user-attachments/assets/791770e5-eef1-4f90-8c12-7f74b0ad32d7" />
 
-### Undersampling of the Majority Class Capabilities (not used in this project)
-Despite undersampling not being used in the project, it should be noted that the parameter `benign_fraction` is present in `dataset.py`, which allows controlled undersampling of benign cases.
+### Capabilities for Undersampling the Majority Class (not used in this project)
+Despite undersampling not being used in the project, it should be noted that the parameter `benign_fraction` is present in `dataset.py`, which allows controlled undersampling of benign cases. This was initially implemented and was considered for use because undersampling prevents the model from being biased towards the majority class and improves its ability to predict the minority class.
    - `benign_fraction = 1.0` &rarr; use all benign samples (default)
    - `benign_fraction < 1.0` &rarr; randomly selects a subset of benign images for a more balanced dataset
 
@@ -135,6 +135,7 @@ The dataset was randomly shuffled and split into three subsets.
 
 
     
+
 
 
 
