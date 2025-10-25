@@ -267,7 +267,7 @@ The accuracies rise sharply during the initial epochs, improving from around 99%
 The AUC is actually 0.9973 (says 1.0 in the image due to plot rounding and display precision). This ROC curve and AUC value shows excellent separability between benign and malignant classes in the test set. The curve closely approaches the top-left corner, reflecting minimal overlap between the predicted probabilities of the two categories.
 
 #### Test Set Confusion Matrix
-<img width="640" height="480" alt="test_conf_matrix" src="https://github.com/user-attachments/assets/d5f547ab-610a-4dac-9f33-76ec87d6c1de" />
+<img width="540" height="380" alt="test_conf_matrix" src="https://github.com/user-attachments/assets/d5f547ab-610a-4dac-9f33-76ec87d6c1de" />
 
 #### Test Performance
    - Test Accuracy: `99.47%`
@@ -275,6 +275,7 @@ The AUC is actually 0.9973 (says 1.0 in the image due to plot rounding and displ
    - Specificity (True negative rate): `0.9971`
 
 The model achieved 99.47% test accuracy, substantially exceeding the project's target performance of 80% accuracy. The model achieves a high sensitivity of 0.8571, which reflects good detection capability. However, further improvement may be desirable, as medical screening tasks typically emphasise maximising sensitivity to minimise the risk of missed diagnoses.
+
 
 
 
