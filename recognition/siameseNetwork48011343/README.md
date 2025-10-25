@@ -88,7 +88,50 @@ Doing this ensures reproducible results across:
    - Data augmentations (rotations, flip, colour jitter, affine transforms)
    - Model weight initialisation and training
 
+## The Dataset
+The pre-processed version of the dataset is used and can be found [here](https://www.kaggle.com/datasets/nischaydnk/isic-2020-jpg-224x224-resized). This one was used instead of the official version due it having a smaller image resolution of 256x256, which significantly reduced system storage.  
+
+### Handling Class Imbalance
+The dataset containing 33126 images was highly imbalanced. 32542 were of the benign class and the remaining 584 were malignant. To address this, targeted augmentation and triplet sampling strategies were applied.  
+
+1. **Strong Data Augmentation for Malignant Images**
+
+   Malignant samples were augmented with aggressive transformations to synthetically expand the minority class and improve model generalisation. The following augmentations were applied:
+      - Random horizontal flips
+      - Random vertical flips
+      - Random rotations (up to 30 degrees)
+      - Colour jitter (adjusting brightness, contrast, saturation, and hue)
+      - Random affine (adds translation, scaling and shear distortions)
+
+2. **Moderate Augmentation for Benign Images**
+
+     Benign samples use a milder augmentation pipeline to avoid excessive distortion of the majority class:
+      - Random horizontal flips
+      - Random vertical flips
+      - Random rotations (up to 15 degrees)
+
+3. **Triplet Sampling**
+
+   During training, each batch contained triplets as mentioned before. This ensures that benign and malignant samples appear in every batch, reinforcing discriminative feature learning between the two classes.
+
+### Undersampling of the Majority Class Capabilities (not used in code)
+Despite undersampling not used in the project, it should be noted that the parameter `benign_fraction` is present in `dataset.py`, which allows controlled undersampling of benign cases.
+   - `benign_fraction = 1.0` &rarr; use all benign samples (default)
+   - `benign_fraction < 1.0` &rarr; randomly selects a subset of benign images for a more balanced dataset
+
+     For example, setting `benign_fraction=0.5` would use only half of the benign data while retaining all malignant cases. This drastically reduces runtime, but negatively affects generalisation due to a lower amount of diverse samples available.
+     
+It was decided to retain all benign cases (`benign_fraction = 1.0`), which effectively uses all 33126 images. This was decided because it would allow effective generalisation on unseen data (test set). However, this significantly greatly increases computational time as the model uses more data to train on as compared to if `benign_fraction < 1.0`.  
+
+### Training, Validation, and Testing Splits
+The dataset was randomly shuffled and split into three subsets.
+   - Train Set: 70% of the data (ensures the model has enough examples to learn complex patterns from the data)
+   - Test Set: 20% of the data (provides a substantial sample of unseen data, leading to a more reliable assessment of the model's ability to generalise)
+   - Validation Set: 10% of the data (adequate amount of data for finding optimal classifiers producing highest validation accuracy after training)
+
+
     
+
 
 
 
