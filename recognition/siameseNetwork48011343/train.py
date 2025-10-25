@@ -204,8 +204,8 @@ def train_siamese(model, train_loader, val_loader, loss_fn, optimiser,
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             torch.save(model.state_dict(), save_path)
-            print(f"Saved best Siamese model with validation accuracy:\
-{best_val_acc:.4f}")
+            print(f"Saved best Siamese model with validation accuracy: "
+                  f"{best_val_acc:.4f}")
 
         print(f"Siamese Epoch {epoch+1}/{epochs} - "
             f"Train Loss: {train_losses[-1]:.4f}, Train Acc: {train_acc:.4f} - "
@@ -273,12 +273,12 @@ def train_classifier(classifier, features_train, labels_train,
             best_val_acc = val_acc
             torch.save(classifier.state_dict(), save_path)
             print(
-                f"Saved best Classifier model with validation accuracy:\
-{best_val_acc:.4f}")
+                f"Saved best Classifier model with validation accuracy: "
+                f"{best_val_acc:.4f}")
 
         print(f"Classifier Epoch {epoch + 1}/{epochs} - "
-              f"Train Loss: {train_losses[-1]:.4f}, \
-              Train Acc: {train_accs[-1]:.4f} - "
+              f"Train Loss: {train_losses[-1]:.4f}, "
+              f"Train Acc: {train_accs[-1]:.4f} - "
               f"Val Loss: {val_losses[-1]:.4f}, Val Acc: {val_accs[-1]:.4f}")
 
     return train_losses, val_losses, train_accs, val_accs
