@@ -229,6 +229,60 @@ Prediction completed. Outputs saved in ./checkpoints/
 ```
 The confusion matrix, ROC curve, and t-SNE embedding of the sample set are saved as images in `checkpoints/`.
 
+## Results
+### Siamese Network Results
+#### Loss Plot
+<img width="540" height="380" alt="siamese_metrics_loss" src="https://github.com/user-attachments/assets/4856bbdd-3198-4f63-ba11-0b63b643e796" />  
+
+The Siamese network training loss drops sharply from 0.123 in epoch 1 to near zero by epoch 6, indicating that the network quickly satisfies the triplet constraints on the training set. In constrast, the validation loss remains relatively high at 0.89 in epoch 1, decreasing to around 0.598 by epoch 8, then flucuating between 0.65 and 0.88. This shows that the network overfits the training triplets and struggles to generalise to unseen data.
+
+#### Accuracy Graph
+<img width="540" height="380" alt="siamese_metrics_accuracy" src="https://github.com/user-attachments/assets/315544dc-671e-480b-b23a-3716a2c5adea" />  
+
+The training accuracy steadily rises from around 78% in epoch 1 to nearly 100% by epoch 6, reflecting the model's ability to learn discriminative embeddings for the training triplets. However, the validation accuracy fluctuates between 55% and 65% across epochs, showing no consistent upward trend. This discrepancy between training and validation performance further supports the observation that the model is overfitting to the training set.
+
+#### Training Data t-SNE Scatterplot
+<img width="450" height="450" alt="train_embeddings_tsne" src="https://github.com/user-attachments/assets/b8aa7cd2-d974-4f83-9f1d-97bc8a8efff5" />  
+
+The t-SNE plot shows the Siamese network has learned some class separation, but with noticeable overlap between benign and malignant clusters. This indicates the model captures meaningful features but struggles to fully distinguish between lesion types, explaining occasional misclassifications despite overall good performance.
+
+#### Validation and Test Data t-SNE Scatterplot
+<img width="450" height="450" alt="val_embeddings_tsne" src="https://github.com/user-attachments/assets/a7a466f7-7eff-4b56-a987-bcbdc3ca51c1" /> <img width="450" height="450" alt="test_embeddings_tsne" src="https://github.com/user-attachments/assets/f27c9d82-8c37-4a78-aae6-843de61edf0b" />  
+
+The validation and test embeddings show clearer class separation than the training set, with more distinct benign and malignant clusters. This indicates the Siamese network generalises well to unseen data and learns meaningful features that transfer effectively beyond the training samples.
+
+### Binary Classifier Results
+#### Loss Plot
+<img width="540" height="380" alt="classifier_metrics_loss" src="https://github.com/user-attachments/assets/675fc8fb-fded-406a-b894-682e1b178c98" />  
+
+The classifier's training loss decreases rapidly during the first few epochs, from around 0.035 in epoch 1 to roughly 0.015 by epoch 10. This continues to decline gradually, reaching about 0.012 by epoch 25. The validation loss closely follows this trend, remaining consistently low (around 0.016-0.020) with only minor fluctuations across epochs. This indicates that the classifier quickly converged and maintained stable generalisation without significant overfitting. 
+
+#### Accuracy Graph
+<img width="540" height="380" alt="classifier_metrics_accuracy" src="https://github.com/user-attachments/assets/12590667-bf5b-4edd-80f9-f659eb9a5fb3" />  
+
+The accuracies rise sharply during the initial epochs, improving from around 99% in epoch 1 to approximately 99.5% by epoch 5. After this rapid increase, both training and validation accuracies stabilise, consistently remaining between 99.5% and 99.7% for the remainder of training. This indicates that the model quickly converged and maintained strong, stable performance without signs of overfitting.
+
+#### Test Set ROC Curve
+<img width="540" height="380" alt="test_roc_curve" src="https://github.com/user-attachments/assets/b81bb970-b2a1-4590-86cf-590a08f25b1d" />
+The AUC is actually 0.9973 (says 1.0 in the image due to plot rounding and display precision). This ROC curve and AUC value shows excellent separability between benign and malignant classes in the test set. The curve closely approaches the top-left corner, reflecting minimal overlap between the predicted probabilities of the two categories.
+
+#### Test Set Confusion Matrix
+<img width="640" height="480" alt="test_conf_matrix" src="https://github.com/user-attachments/assets/d5f547ab-610a-4dac-9f33-76ec87d6c1de" />
+
+#### Test Performance
+   - Test Accuracy: `99.47%`
+   - Sensitivity (Recall for positive): `0.8571`
+   - Specificity (True negative rate): `0.9971`
+
+The model achieved 99.47% test accuracy, substantially exceeding the project's target performance of 80% accuracy. The model achieves a high sensitivity of 0.8571, which reflects good detection capability. However, further improvement may be desirable, as medical screening tasks typically emphasise maximising sensitivity to minimise the risk of missed diagnoses.
+
+
+
+
+
+
+
+
 
 
 
