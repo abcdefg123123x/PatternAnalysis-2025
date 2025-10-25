@@ -83,7 +83,7 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 ```
 Doing this ensures reproducible results across:
-   - Dataset splits (train/test/validaiton)
+   - Dataset splits (train/test/validation)
    - Triplet sampling in the Siamese dataset
    - Data augmentations (rotations, flip, colour jitter, affine transforms)
    - Model weight initialisation and training
@@ -125,7 +125,7 @@ Despite undersampling not being used in the project, it should be noted that the
 
      For example, setting `benign_fraction=0.5` would use only half of the benign data while retaining all malignant cases. This drastically reduces runtime, but negatively affects generalisation due to a lower amount of diverse samples available.
      
-It was decided to retain all benign cases (`benign_fraction = 1.0`), which effectively uses all 33126 images. This was decided because it would allow effective generalisation on unseen data (test set). However, this significantly greatly increases computational time as the model uses more data to train on as compared to if `benign_fraction < 1.0`.  
+It was decided to retain all benign cases (`benign_fraction = 1.0`), which effectively uses all 33126 images. This was decided because it would allow effective generalisation on unseen data (test set). However, this greatly increases computational time as the model uses more data to train on as compared to if `benign_fraction < 1.0`.  
 
 ### Training, Validation, and Testing Splits
 The dataset was randomly shuffled and split into three subsets.
@@ -133,8 +133,109 @@ The dataset was randomly shuffled and split into three subsets.
    - Test Set: 20% of the data (provides a substantial sample of unseen data, leading to a more reliable assessment of the model's ability to generalise)
    - Validation Set: 10% of the data (adequate amount of data for finding optimal classifiers producing highest validation accuracy after training)
 
+## Usage
+Firstly, ensure that all 33126 images are stored inside a folder named: `ISIC_2020_Training_JPEG/`  
+The CSV file containing the metadata must also be named: `train-metadata.csv`  
 
-    
+Ensure the files are organised as follows:
+
+```
+├── checkpoints/
+├── ISIC_2020_Training_JPEG/
+│ ├── ISIC_0015719.jpg
+│ ├── ISIC_0052212.jpg
+│ ├── ISIC_0068279.jpg
+│ └── ...
+├── train-metadata.csv
+├── dataset.py
+├── modules.py
+├── train.py
+├── predict.py
+├── utils.py
+├── README.md
+```
+Ensure all dependencies are installed as listed in the [Dependencies and Reproducibility](#dependencies-and-reproducibility) section.  
+
+To perform training and testing of the models, simply run the following:  
+
+```
+python train.py
+```  
+
+This will print out a log of the training, validation, and testing information like the following (most of it is omitted due to its length):  
+```
+Using the following seed for reproducibility: 115
+Siamese Epoch 1/30: 100%|██████████| 725/725 [03:52<00:00,  3.11it/s, loss=0.123]
+Saved best Siamese model with validation accuracy:0.6450
+Siamese Epoch 1/30 - Train Loss: 0.1230, Train Acc: 0.6509 - Val Loss: 0.8900, Val Acc: 0.6450
+Siamese Epoch 2/30: 100%|██████████| 725/725 [03:52<00:00,  3.12it/s, loss=0.00862]
+Saved best Siamese model with validation accuracy:0.7160
+⋮
+Siamese Epoch 30/30 - Train Loss: 0.0000, Train Acc: 0.6917 - Val Loss: 0.8589, Val Acc: 0.6822
+Classifier Epoch 1/25: 100%|██████████| 725/725 [00:01<00:00, 591.58it/s, acc=0.991, loss=0.0349]
+Saved best Classifier model with validation accuracy:0.9934
+Classifier Epoch 1/25 - Train Loss: 0.0345,               Train Acc: 0.9906 - Val Loss: 0.0218, Val Acc: 0.9934
+Classifier Epoch 2/25: 100%|██████████| 725/725 [00:01<00:00, 596.32it/s, acc=0.993, loss=0.0214]
+Saved best Classifier model with validation accuracy:0.9949
+⋮
+Classifier Epoch 25/25: 100%|██████████| 725/725 [00:01<00:00, 597.65it/s, acc=0.996, loss=0.0122]
+Classifier Epoch 25/25 - Train Loss: 0.0122,               Train Acc: 0.9962 - Val Loss: 0.0188, Val Acc: 0.9958
+Test Accuracy: 99.47%
+Test Set Confusion Matrix:
+Labels: ['Benign', 'Malignant']
+[[6494   19]
+ [  16   96]]
+
+ROC and AUC Results:
+ - AUC: 0.9973
+ - Sensitivity (Recall for positive): 0.8571
+ - Specificity (True negative rate): 0.9971
+```
+The printed text version of the confusion matrix corresponds to the following in the RESULTS SECTION, DO LATER  
+
+Note that the loss and accuracy plots (for train and validation sets), t-SNE embeddings (for all three sets), test set confusion matrices, and test set ROC curve are saved as images in the directory `checkpoints/`.  
+
+After training (`train.py`), the `checkpoints/` directory will contain `best_siamese.pth` and `best_classifier.pth`. These files store each model's weights corresponding to the highest validation accuracy achieved during training. These two files are also required for inferencing with `predict.py`. Without them, the script cannot load the trained models to make predictions.  
+
+To perform inference on trained models, simply run the following:  
+```
+python predict.py
+```
+Note that `predict.py` is intended for demonstrate purposes on the trained models. It uses a sample subset of the dataset (10% of all images) for evaluation, drawn randomly from the validation dataloader. The sampled images may or may not have been seen during training, so results on this subset do not necessarily reflect performance on a dedicated test set (the test set was already done in `train.py` as mentioned before). Each run may produce a different set of images due to random sampling.  
+
+Running inference will produce (the following is an example, and is different each run):  
+```
+Running inference on device: cuda
+Evaluating Binary Classifier on sample embeddings:
+Sample Set Confusion Matrix:
+Labels: ['Benign', 'Malignant']
+[[3242    5]
+ [  10   56]]
+
+ROC and AUC Results:
+ - AUC: 0.9992
+ - Sensitivity (Recall for positive): 0.8485
+ - Specificity (True negative rate): 0.9985
+ Accuracy on sample data: 99.55%
+
+Evaluation Summary:
+ AUC: 0.9992
+ Sensitivity: 0.8485
+ Specificity: 0.9985
+
+Generating t-SNE visualisation for sample embeddings...
+
+Prediction completed. Outputs saved in ./checkpoints/
+```
+The confusion matrix, ROC curve, and t-SNE embedding of the sample set are saved as images in `checkpoints/`.
+
+
+
+
+
+
+
+
 
 
 
