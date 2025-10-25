@@ -263,7 +263,8 @@ The classifier's training loss decreases rapidly during the first few epochs, fr
 The accuracies rise sharply during the initial epochs, improving from around 99% in epoch 1 to approximately 99.5% by epoch 5. After this rapid increase, both training and validation accuracies stabilise, consistently remaining between 99.5% and 99.7% for the remainder of training. This indicates that the model quickly converged and maintained strong, stable performance without signs of overfitting.
 
 #### Test Set ROC Curve
-<img width="540" height="380" alt="test_roc_curve" src="https://github.com/user-attachments/assets/b81bb970-b2a1-4590-86cf-590a08f25b1d" />
+<img width="540" height="380" alt="test_roc_curve" src="https://github.com/user-attachments/assets/b81bb970-b2a1-4590-86cf-590a08f25b1d" />  
+
 The AUC is actually 0.9973 (says 1.0 in the image due to plot rounding and display precision). This ROC curve and AUC value shows excellent separability between benign and malignant classes in the test set. The curve closely approaches the top-left corner, reflecting minimal overlap between the predicted probabilities of the two categories.
 
 #### Test Set Confusion Matrix
@@ -275,6 +276,7 @@ The AUC is actually 0.9973 (says 1.0 in the image due to plot rounding and displ
    - Specificity (True negative rate): `0.9971`
 
 The model achieved 99.47% test accuracy, substantially exceeding the project's target performance of 80% accuracy. The model achieves a high sensitivity of 0.8571, which reflects good detection capability. However, further improvement may be desirable, as medical screening tasks typically emphasise maximising sensitivity to minimise the risk of missed diagnoses.
+
 
 
 
