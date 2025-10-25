@@ -277,6 +277,26 @@ The AUC is actually 0.9973 (says 1.0 in the image due to plot rounding and displ
 
 The model achieved 99.47% test accuracy, substantially exceeding the project's target performance of 80% accuracy. The model achieves a high sensitivity of 0.8571, which reflects good detection capability. However, further improvement may be desirable, as medical screening tasks typically emphasise maximising sensitivity to minimise the risk of missed diagnoses.
 
+## Results of Sample Data (`predict.py` outputs)
+This section shows the outputs from `predict.py` when the sample data is fed into the entire network for evaluation or prediction. The network uses the saved optimal classifier weights obtained during training (from `train.py`), which effectively shows example usage of the entire trained model. Due to this, no analysis will be made on the outputs and they are presented for demonstration purposes only. Additionally, analysis is omitted because this is not a dedicated test set on completely unseen data as mentioned before.
+
+### t-SNE Scatterplot and ROC Curve
+<img width="400" height="400" alt="PREDICT_embeddings_tsne_predict" src="https://github.com/user-attachments/assets/0783a5cd-5dce-497a-8c19-711f3d815ae7" /> <img width="500" height="400" alt="PREDICT_roc_curve" src="https://github.com/user-attachments/assets/bc09941e-4201-4dcf-885e-6fa3c49f64a4" />
+
+The actual AUC was 0.9992.
+
+### Confusion Matrix
+<img width="540" height="380" alt="PREDICT_confusion_matrix" src="https://github.com/user-attachments/assets/e9aae9f5-e85e-461d-af6f-f19da635a479" />
+
+### Sample Data Performance
+   - Accuracy: `99.55%`
+   - Sensitivity: `0.8485`
+   - Specificity: `0.9985`
+
+
+
+
+
 
 
 
