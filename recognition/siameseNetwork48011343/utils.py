@@ -141,12 +141,15 @@ def plot_tsne(features_list, labels_list,
                 random_state=100)
     features_2d = tsne.fit_transform(features_tensor)
 
-    # Plot the t-SNE projection
+    # Define readable class names
+    class_names = {0: "Benign", 1: "Malignant"}
+
+    # Plot the t-SNE projection with readable labels
     plt.figure(figsize=(8, 8))
     for label in np.unique(labels_tensor):
         idx = labels_tensor == label
         plt.scatter(features_2d[idx, 0], features_2d[idx, 1],
-                    label=f"Class {label}", alpha=0.6)
+                    label=class_names.get(label, f"Class {label}"), alpha=0.6)
     plt.legend()
     plt.title(title)
     plt.xlabel("t-SNE 1")
