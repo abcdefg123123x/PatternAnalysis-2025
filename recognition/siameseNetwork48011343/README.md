@@ -19,6 +19,7 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
 2. **Binary Classification (Stage 2)**
    - The learned embeddings are fed into a binary classifier network (a multi-layer perception with BatchNorm and Dropout).
    - It outputs logits for benign and malignant classes.
+   - Higher logits indicate greater model confidence for the corresponding class. These logits are later converted into probabilities using the softmax function during evaluation.
    - This classifier is trained using standard cross-entropy loss, using embeddings from the trained Siamese model.
   
 3. **Evaluation and Visualisation**
@@ -28,14 +29,16 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
 
 ### Network Architecture
   - **Embedding Network (Siamese backbone)**
-    ![Siamese Network](https://github.com/user-attachments/assets/648f4776-fcf1-4edb-a690-1bb6915bf659)
+    ![Siamese Network](https://github.com/user-attachments/assets/766b2719-036e-4cbd-9cbd-ec9bb376d804)
+
     - Base model: ResNet 34 backbone pre-trained for general image feature extraction.
     - Projection head: Three fully connected layers (512 &rarr; 512 &rarr; 256 &rarr; 128).
     - Activation: ReLU applied after each layer.
     - Normalisation: L2 normalisation to constrain embeddings on the unit hypersphere.
     - Output: 128-dimensional embedding vector representing each input image.
     - Loss function: Triplet margin loss (`TripletMarginLoss`) for training on triplets.
-    - Optimiser: Adam optimiser applied to update Siamese network parameters.
+    - Optimiser: Adam optimiser applied to update Siamese network parameters (learning rate of $1 \times 10^{-4}$).
+    - Epochs: 30
     
   - **Training Strategy (triplet learning)**
     - Trained using triplet loss on *(anchor, positive, negative)* image sets.
@@ -43,7 +46,7 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
     - Maximises distance between embeddings of dissimilar lesions (benign-malignant).
     <img width="645" height="200" alt="triplet loss pic" src="https://github.com/user-attachments/assets/10f41aef-bf36-4939-931c-e439ff1bd065" />
 
-      Triplet loss equation ($\alpha$ is the margin, ***a*** anchor, ***p*** positive, ***n*** negative):
+      Triplet loss equation ($\alpha$ is the margin, ***a*** anchor, ***p*** positive, ***n*** negative, *d()* is the Euclidean distance):
    
     <img width="398" height="59" alt="triplet loss eq" src="https://github.com/user-attachments/assets/42f6dbd9-442e-48a8-a839-5a8af2739499" />
 
@@ -57,7 +60,8 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
     - Regularisation: Batch normalisation and dropout for generalisation.
     - Output: Two logits corresponding to benign and malignant cases.
     - Loss function: Cross-entropy loss is used to train the classifier, comparing predicted logits against ground-truth labels.
-    - Optimiser: Adam optimiser is applied to update classifier parameters.
+    - Optimiser: Adam optimiser is applied to update classifier parameters (learning rate of $5 \times 10^{-4}$).
+    - Epochs: 25
    
 ## Dependencies and Reproducibility
 The main dependencies required are:
@@ -82,11 +86,18 @@ torch.cuda.manual_seed_all(seed)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 ```
-Doing this ensures reproducible results across:
+Doing this ensures the seed is applied globally across all files, including `dataset.py`, as long as `train.py` sets the seed before importing or using other modules.
+
+This ensures reproducible results across:
    - Dataset splits (train/test/validation)
    - Triplet sampling in the Siamese dataset
    - Data augmentations (rotations, flip, colour jitter, affine transforms)
    - Model weight initialisation and training
+
+If a different seed is to be used, simple replace the value of `seed` with another integer. Alternatively, to use a completely random seed each run, simply generate one with: 
+```python
+seed = random.randint(0, 2**32 - 1)
+```
 
 ## The Dataset
 The pre-processed version of the dataset is used and can be found [here](https://www.kaggle.com/datasets/nischaydnk/isic-2020-jpg-224x224-resized). This one was used instead of the official version due it having a smaller image resolution of 256x256, which significantly reduced system storage.  
@@ -125,7 +136,7 @@ Despite undersampling not being used in the project, it should be noted that the
 
      For example, setting `benign_fraction=0.5` would use only half of the benign data while retaining all malignant cases. This drastically reduces runtime, but negatively affects generalisation due to a lower amount of diverse samples available.
      
-It was decided to retain all benign cases (`benign_fraction = 1.0`), which effectively uses all 33126 images. This was decided because it would allow effective generalisation on unseen data (test set). However, this greatly increases computational time as the model uses more data to train on as compared to if `benign_fraction < 1.0`.  
+It was decided to retain all benign cases (`benign_fraction=1.0`), which effectively uses all 33126 images. This was decided because it would allow effective generalisation on unseen data (test set). However, this greatly increases computational time as the model uses more data to train on as compared to if `benign_fraction < 1.0`.  
 
 ### Training, Validation, and Testing Splits
 The dataset was randomly shuffled and split into three subsets.
@@ -165,21 +176,23 @@ python train.py
 This will print out a log of the training, validation, and testing information like the following (most of it is omitted due to its length):  
 ```
 Using the following seed for reproducibility: 115
-Siamese Epoch 1/30: 100%|██████████| 725/725 [03:52<00:00,  3.11it/s, loss=0.123]
-Saved best Siamese model with validation accuracy:0.6450
+Siamese Epoch 1/30: 100%|██████████| 725/725 [04:52<00:00,  2.48it/s, loss=0.123]
+Saved best Siamese model with validation accuracy: 0.6450
 Siamese Epoch 1/30 - Train Loss: 0.1230, Train Acc: 0.6509 - Val Loss: 0.8900, Val Acc: 0.6450
-Siamese Epoch 2/30: 100%|██████████| 725/725 [03:52<00:00,  3.12it/s, loss=0.00862]
-Saved best Siamese model with validation accuracy:0.7160
+Siamese Epoch 2/30: 100%|██████████| 725/725 [04:57<00:00,  2.44it/s, loss=0.00863]
+Saved best Siamese model with validation accuracy: 0.7160
+Siamese Epoch 2/30 - Train Loss: 0.0086, Train Acc: 0.7050 - Val Loss: 0.8313, Val Acc: 0.7160
 ⋮
+Siamese Epoch 30/30: 100%|██████████| 725/725 [04:40<00:00,  2.58it/s, loss=3.01e-6]
 Siamese Epoch 30/30 - Train Loss: 0.0000, Train Acc: 0.6917 - Val Loss: 0.8589, Val Acc: 0.6822
-Classifier Epoch 1/25: 100%|██████████| 725/725 [00:01<00:00, 591.58it/s, acc=0.991, loss=0.0349]
-Saved best Classifier model with validation accuracy:0.9934
-Classifier Epoch 1/25 - Train Loss: 0.0345,               Train Acc: 0.9906 - Val Loss: 0.0218, Val Acc: 0.9934
-Classifier Epoch 2/25: 100%|██████████| 725/725 [00:01<00:00, 596.32it/s, acc=0.993, loss=0.0214]
-Saved best Classifier model with validation accuracy:0.9949
+Classifier Epoch 1/25: 100%|██████████| 725/725 [00:01<00:00, 591.86it/s, acc=0.991, loss=0.0349]
+Saved best Classifier model with validation accuracy: 0.9934
+Classifier Epoch 1/25 - Train Loss: 0.0345, Train Acc: 0.9906 - Val Loss: 0.0218, Val Acc: 0.9934
+Classifier Epoch 2/25: 100%|██████████| 725/725 [00:01<00:00, 596.06it/s, acc=0.993, loss=0.0214]
+Saved best Classifier model with validation accuracy: 0.9949
+Classifier Epoch 2/25 - Train Loss: 0.0212, Train Acc: 0.9934 - Val Loss: 0.0201, Val Acc: 0.9949
 ⋮
-Classifier Epoch 25/25: 100%|██████████| 725/725 [00:01<00:00, 597.65it/s, acc=0.996, loss=0.0122]
-Classifier Epoch 25/25 - Train Loss: 0.0122,               Train Acc: 0.9962 - Val Loss: 0.0188, Val Acc: 0.9958
+Classifier Epoch 25/25 - Train Loss: 0.0122, Train Acc: 0.9962 - Val Loss: 0.0188, Val Acc: 0.9958
 Test Accuracy: 99.47%
 Test Set Confusion Matrix:
 Labels: ['Benign', 'Malignant']
@@ -190,8 +203,10 @@ ROC and AUC Results:
  - AUC: 0.9973
  - Sensitivity (Recall for positive): 0.8571
  - Specificity (True negative rate): 0.9971
+
+Training completed. All model weights, evaluation metrics, and embedding visualisations have been saved in the ./checkpoints/ directory.
 ```
-The printed text version of the confusion matrix corresponds to the following in the RESULTS SECTION, DO LATER  
+The printed text version of the confusion matrix corresponds to the following in the [Test Set Confusion Matrix](#test-set-confusion-matrix) of the results section.
 
 Note that the loss and accuracy plots (for train and validation sets), t-SNE embeddings (for all three sets), test set confusion matrices, and test set ROC curve are saved as images in the directory `checkpoints/`.  
 
@@ -227,7 +242,7 @@ Generating t-SNE visualisation for sample embeddings...
 
 Prediction completed. Outputs saved in ./checkpoints/
 ```
-The confusion matrix, ROC curve, and t-SNE embedding of the sample set are saved as images in `checkpoints/`.
+The confusion matrix, ROC curve, and t-SNE embedding of the sample set are saved as images in `checkpoints/`. Outputs of these can be viewed in the [Results of Sample Data](#results-of-sample-data-predictpy-outputs) section. Check this section for the confusion matrix labels.
 
 ## Results
 ### Siamese Network Results
@@ -243,6 +258,8 @@ The training accuracy steadily rises from around 78% in epoch 1 to nearly 100% b
 
 #### Training Data t-SNE Scatterplot
 <img width="450" height="450" alt="train_embeddings_tsne" src="https://github.com/user-attachments/assets/b8aa7cd2-d974-4f83-9f1d-97bc8a8efff5" />  
+
+'Class 0' corresponds to the benign class, and 'Class 1' corresponds to the malignant. This is also the same for all other t-SNE scatterplots.
 
 The t-SNE plot shows the Siamese network has learned some class separation, but with noticeable overlap between benign and malignant clusters. This indicates the model captures meaningful features but struggles to fully distinguish between lesion types, explaining occasional misclassifications despite overall good performance.
 
@@ -292,32 +309,3 @@ The actual AUC was 0.9992.
    - Accuracy: `99.55%`
    - Sensitivity: `0.8485`
    - Specificity: `0.9985`
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
