@@ -35,6 +35,7 @@ base_transform = transforms.Compose([
 ])
 
 # Apply strong transforms for malignant images to handle class imbalance
+# AI used here: ChatGPT generated these stronger augmentations for malignant
 malignant_transform = transforms.Compose([
     transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip(),

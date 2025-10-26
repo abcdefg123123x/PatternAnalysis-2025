@@ -361,5 +361,8 @@ if __name__ == "__main__":
     metrics = compute_roc_auc(classifier, test_features, test_labels,
                               save_path="checkpoints/test_roc_curve.png")
 
-    print("\nTraining completed. All model weights, evaluation metrics, and \
-    embedding visualisations have been saved in the ./checkpoints/ directory.")
+    print(
+        "\nTraining completed. All model weights, evaluation metrics, "
+        "and embedding visualisations have been saved in the "
+        "./checkpoints/ directory."
+    )
