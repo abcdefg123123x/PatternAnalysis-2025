@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Melanoma detection from dermoscopic images is a critical medical task due to the high mortality associated with late diagnosis. However, the ISIC 2020 dataset presents challenges such as class imbalance (few malignant cases) and visual similarity between benign and malignant lesions. To address this, the implemented approach combined deep metric learning and binary classification. This project implements a Siamese neural network with a ResNet 34 backbone that learns discriminative feature embeddings by comparing image triplets (anchor, positive, negative) and optimising a triplet loss, ensuring that embeddings of similar lesions are closer in the learned space. These embeddings are then passed into a binary classifier that predicts whether a lesion is benign or malignant. This joint setup allows the model to generalise effectively to new patient data, achieving an accuracy of greater than 0.8 on a given test set.
+Melanoma detection from dermoscopic images is a critical medical task due to the high mortality associated with late diagnosis. However, the ISIC 2020 dataset presents challenges such as class imbalance (few malignant cases) and visual similarity between benign and malignant lesions. To address this, the implemented approach combined deep metric learning and binary classification. This project implements a Siamese neural network with a ResNet 34 backbone that learns discriminative feature embeddings by comparing image triplets (anchor, positive, negative) and optimising a triplet loss, ensuring that embeddings of similar lesions are closer in the learned space. These embeddings are then passed into a binary classifier that predicts whether a lesion is benign or malignant. This joint setup allows the model to generalise effectively to new patient data, achieving an accuracy of greater than 0.8 (80%) on a given test set.
 
 ## Algorithm Description
 This implemented algorithm follows a two-stage deep learning pipeline combining metric learning and supervised classification.
@@ -131,12 +131,12 @@ The dataset containing 33126 images was highly imbalanced. 32542 were of the ben
 
 ### Capabilities for Undersampling the Majority Class (not used in this project)
 Despite undersampling not being used in the project, it should be noted that the parameter `benign_fraction` is present in `dataset.py`, which allows controlled undersampling of benign cases. This was initially implemented and was considered for use because undersampling prevents the model from being biased towards the majority class and improves its ability to predict the minority class.
-   - `benign_fraction = 1.0` &rarr; use all benign samples (default)
-   - `benign_fraction < 1.0` &rarr; randomly selects a subset of benign images for a more balanced dataset
+   - `benign_fraction=1.0` &rarr; use all benign samples (default)
+   - `benign_fraction<1.0` &rarr; randomly selects a subset of benign images for a more balanced dataset
 
      For example, setting `benign_fraction=0.5` would use only half of the benign data while retaining all malignant cases. This drastically reduces runtime, but negatively affects generalisation due to a lower amount of diverse samples available.
      
-It was decided to retain all benign cases (`benign_fraction=1.0`), which effectively uses all 33126 images. This was decided because it would allow effective generalisation on unseen data (test set). However, this greatly increases computational time as the model uses more data to train on as compared to if `benign_fraction < 1.0`.  
+It was decided to retain all benign cases (`benign_fraction=1.0`), which effectively uses all 33126 images. This was decided because it would allow effective generalisation on unseen data (test set). However, this greatly increases computational time as the model uses more data to train on as compared to if `benign_fraction<1.0`.  
 
 ### Training, Validation, and Testing Splits
 The dataset was randomly shuffled and split into three subsets.
@@ -216,7 +216,7 @@ To perform inference on trained models, simply run the following:
 ```
 python predict.py
 ```
-Note that `predict.py` is intended for demonstrate purposes on the trained models. It uses a sample subset of the dataset (10% of all images) for evaluation, drawn randomly from the validation dataloader. The sampled images may or may not have been seen during training, so results on this subset do not necessarily reflect performance on a dedicated test set (the test set was already done in `train.py` as mentioned before). Each run may produce a different set of images due to random sampling.  
+Note that `predict.py` is intended for demonstration purposes only on the trained models. It uses a sample subset of the dataset (10% of all images) for evaluation, drawn randomly from the validation dataloader. The sampled images may or may not have been seen during training, so results on this subset do not necessarily reflect performance on a dedicated test set (the test set was already done in `train.py` as mentioned before). Each run may produce a different set of images due to random sampling.  
 
 Running inference will produce (the following is an example, and is different each run):  
 ```
@@ -254,7 +254,7 @@ The Siamese network training loss drops sharply from 0.123 in epoch 1 to near ze
 #### Accuracy Graph
 <img width="540" height="380" alt="siamese_metrics_accuracy" src="https://github.com/user-attachments/assets/315544dc-671e-480b-b23a-3716a2c5adea" />  
 
-The training accuracy steadily rises from around 78% in epoch 1 to nearly 100% by epoch 6, reflecting the model's ability to learn discriminative embeddings for the training triplets. However, the validation accuracy fluctuates between 55% and 65% across epochs, showing no consistent upward trend. This discrepancy between training and validation performance further supports the observation that the model is overfitting to the training set.
+Both training and validation accuracies share very similar trends. The accuracies improve significantly from around 65% at epoch 1 to over 87% at other epochs. However, the accuracies remain lower after epoch 15, fluctuating between 55% and 83%. This indicates potential instability in the later training stages. This means the model maintains good generalisation, but may be experiencing optimisation challenges or convergence issues in the final epochs.
 
 #### Training Data t-SNE Scatterplot
 <img width="450" height="450" alt="train_embeddings_tsne" src="https://github.com/user-attachments/assets/b8aa7cd2-d974-4f83-9f1d-97bc8a8efff5" />  
@@ -277,7 +277,7 @@ The classifier's training loss decreases rapidly during the first few epochs, fr
 #### Accuracy Graph
 <img width="540" height="380" alt="classifier_metrics_accuracy" src="https://github.com/user-attachments/assets/12590667-bf5b-4edd-80f9-f659eb9a5fb3" />  
 
-The accuracies rise sharply during the initial epochs, improving from around 99% in epoch 1 to approximately 99.5% by epoch 5. After this rapid increase, both training and validation accuracies stabilise, consistently remaining between 99.5% and 99.7% for the remainder of training. This indicates that the model quickly converged and maintained strong, stable performance without signs of overfitting.
+The accuracies rise sharply during the initial epochs, improving from around 99% in epoch 1 to approximately 99.5% by epoch 5. After this rapid increase, both training and validation accuracies stabilise, consistently remaining between 99.4% and 99.7% for the remainder of training. This indicates that the model quickly converged and maintained strong, stable performance without signs of overfitting.
 
 #### Test Set ROC Curve
 <img width="540" height="380" alt="test_roc_curve" src="https://github.com/user-attachments/assets/b81bb970-b2a1-4590-86cf-590a08f25b1d" />  
@@ -309,3 +309,4 @@ The actual AUC was 0.9992.
    - Accuracy: `99.55%`
    - Sensitivity: `0.8485`
    - Specificity: `0.9985`
+
