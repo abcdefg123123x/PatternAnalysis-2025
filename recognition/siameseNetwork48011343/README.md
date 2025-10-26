@@ -310,3 +310,20 @@ The actual AUC was 0.9992.
    - Sensitivity: `0.8485`
    - Specificity: `0.9985`
 
+## Future Recommendations
+Based on the test performance results from the trained models (results of `train.py`), some recommendations for improvement can be considered. These recommendations focus on increasing the sensitivity value because it is important for the entire model to accurately identify true malignant cases in a real medical setting.
+1. **Weighted Cross-Entropy**
+
+   Weighted cross-entropy multiplies the loss for each class by a class-specific weight. For a highly imbalanced dataset like ISIC 2020, assigning a higher weight to the malignant class forces the binary classifier to focus more on correctly identifying malignant samples. This typically increases sensitivity but may slightly reduce specificity. Careful tuning of the class weights is important to achieve a balanced trade-off between the two.
+
+2. **Focal Loss**
+
+   Focal loss is an alternative to cross-entropy that dynamically down-weights easy examples and focuses the binary classifier's learning on hard or misclassified samples. This is particularly useful for this imbalanced dataset, where benign images dominate. By reducing the contribution of easily classified benign samples to the loss, the model becomes more sensitive to malignant cases. The focusing parameter ($\gamma$) controls how much harder samples are emphasised and should be tuned carefully for optimal performance.
+
+3. **Data Augmentation with Synthetic Oversampling**
+
+   Techniques such as SMOTE (Synthetic Minority Oversampling Technique) or GAN-based data generation can be applied to increase the number and diversity of malignant images. This helps the classifier learn more about robust malignant features and reduces overfitting to the malignant samples. However, synthetic data must be carefully validated to ensure it represents realistic lesion patterns and does not introduce artificial bias.
+
+## References
+
+
