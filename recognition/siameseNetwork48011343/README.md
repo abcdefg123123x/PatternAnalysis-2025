@@ -12,7 +12,7 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
      - Anchor (a reference image)
      - Positive (same class as anchor)
      - Negative (different class)
-   - The network passes each image through a shared feature extractor and a projection head, producing 128-dimensional embeddings. This projection head serves to transform backbone features         into a space optimised for triplet loss learning.
+   - The network passes each image through a shared feature extractor and a projection head, producing 128-dimensional embeddings. This projection head serves to transform backbone features into a space optimised for triplet loss learning.
    - A triplet loss is applied, encouraging embeddings of the same class to be close together and embeddings of different classes to be far apart.
    - This stage learns a discriminative feature space, making lesions of the same type cluster together.
 
@@ -65,19 +65,19 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
     - Input: 128-dimensional embeddings from the Siamese network.
     - Architecture: Fully connected layers (128 &rarr; 512 &rarr; 256 &rarr; 64 &rarr; 2).
     - Activation: ReLU after each hidden layer.
-    - Regularisation: Batch normalisation and dropout (`p=0.4`) to reduce overfitting and improve generalisation across patient images.
+    - Regularisation: Batch normalisation and Dropout (`p=0.4`) to reduce overfitting and improve generalisation across patient images.
     - Output: Two logits corresponding to benign and malignant cases.
     - Loss function: Cross-entropy loss is used to train the classifier, comparing predicted logits against ground-truth labels.
     - Optimiser: Adam optimiser is applied to update classifier parameters (learning rate of $5 \times 10^{-4}$ to allow faster fine-tuning of the classifier).
-    - Epochs: 25 (sufficient for convergence while avoiding overfitting)
+    - Epochs: 25 (sufficient for convergence while minimising overfitting risk)
    
 ## Dependencies and Reproducibility
 The main dependencies required are:
    - pandas: 2.3.2
    - numpy: 1.24.4
    - Pillow: 11.1.0
-   - torch: 2.5.1
-   - torchvision: 0.20.1
+   - PyTorch: 2.5.1
+   - TorchVision: 0.20.1
    - matplotlib: 3.10.5
    - scikit-learn: 1.7.1
    - tqdm: 4.67.1  
@@ -264,7 +264,7 @@ These are the results of `train.py`.
 #### Loss Plot
 <img width="540" height="380" alt="siamese_metrics_loss" src="https://github.com/user-attachments/assets/4856bbdd-3198-4f63-ba11-0b63b643e796" />  
 
-The Siamese network training loss drops sharply from 0.123 in epoch 1 to near zero by epoch 6, indicating that the network quickly satisfies the triplet constraints on the training set. In contrast, the validation loss remains relatively high at 0.89 in epoch 1, decreasing to around 0.598 by epoch 8, then flucuating between 0.65 and 0.88. This shows that the network somewhat overfits the training triplets and struggles to generalise to unseen data.
+The Siamese network training loss drops sharply from 0.123 in epoch 1 to near zero by epoch 6, indicating that the network quickly satisfies the triplet constraints on the training set. In contrast, the validation loss remains relatively high at 0.89 in epoch 1, decreasing to around 0.598 by epoch 8, then fluctuating between 0.65 and 0.88. This shows that the network somewhat overfits the training triplets and struggles to generalise to unseen data.
 
 #### Accuracy Graph
 <img width="540" height="380" alt="siamese_metrics_accuracy" src="https://github.com/user-attachments/assets/315544dc-671e-480b-b23a-3716a2c5adea" />  
@@ -335,7 +335,7 @@ Based on the test performance results from the trained models (results of `train
 
 2. **Implement Focal Loss**
 
-   Focal loss is an alternative to cross-entropy that dynamically down-weights easy examples and focuses the binary classifier's learning on hard or misclassified samples. This is particularly useful for this imbalanced dataset, where benign images dominate. By reducing the contribution of easily classified benign samples to the loss, the model becomes more sensitive to malignant cases. The focusing parameter ($\gamma$) controls how much the harder samples are emphasised and should be tuned carefully for optimal performance.
+   Focal loss is an alternative to cross-entropy that dynamically down-weights easy examples and focuses the binary classifier's learning on hard or misclassified samples. This is particularly useful for this imbalanced dataset, where benign images dominate. By reducing the contribution of easily classified benign samples to the loss, the model becomes more sensitive to malignant cases. The focusing parameter ($\gamma$) controls how much harder samples are emphasised and should be tuned carefully for optimal performance.
 
 3. **More Aggressive and Intensive Data Augmentation with Synthetic Oversampling**
 
@@ -355,5 +355,6 @@ ChatGPT was used to produce stronger augmentations given the basic benign augmen
 [2]: National Academies Press (2015, December 29). Improving Diagnosis in Health Care. National Library of Medicine. https://www.ncbi.nlm.nih.gov/books/NBK338593/ 
 
 [3]: Shreffler, Jacob; Huecker, Martin R. (2023, March 6). Diagnostic Testing Accuracy: Sensitivity, Specificity, Predictive Values and Likelihood Ratios. National Library of Medicine: https://www.ncbi.nlm.nih.gov/books/NBK557491/
+
 
 
