@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Melanoma detection from dermoscopic images is a critical medical task due to the high mortality associated with late diagnosis. However, the ISIC 2020 dataset presents challenges such as class imbalance (few malignant cases) and visual similarity between benign and malignant lesions. To address this, the implemented approach combined deep metric learning and binary classification. This project implements a Siamese neural network with a ResNet 34 backbone that learns discriminative feature embeddings by comparing image triplets (anchor, positive, negative) and optimising a triplet loss, ensuring that embeddings of similar lesions are closer in the learned space. These embeddings are then passed into a binary classifier that predicts whether a lesion is benign or malignant. This joint setup allows the model to generalise effectively to new patient data, achieving an accuracy of greater than 0.8 (80%) on a given test set.
+Melanoma detection from dermoscopic images is a critical medical task due to the high mortality associated with late diagnosis. However, the ISIC 2020 dataset presents challenges such as class imbalance (few malignant cases) and visual similarity between benign and malignant lesions. To address this, the implemented approach combined deep metric learning and binary classification. This project implements a Siamese neural network with a ResNet 34 backbone that learns discriminative feature embeddings by comparing image triplets (anchor, positive, negative) and optimising a triplet loss, ensuring that embeddings of similar lesions are closer in the learned space. These embeddings are then passed to a binary classifier that predicts whether a lesion is benign or malignant. This joint setup allows the model to generalise effectively to new patient data, achieving an accuracy of greater than 0.8 (goal of > 80%) on a given test set.
 
 ## Algorithm Description
 This implemented algorithm follows a two-stage deep learning pipeline combining metric learning and supervised classification.
@@ -23,7 +23,7 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
    - This classifier is trained using standard cross-entropy loss, using embeddings from the trained Siamese model.
   
 3. **Evaluation and Visualisation**
-   - During prediction, the Siamese model generates embeddings for the validation subset.
+   - After training, the Siamese model generates embeddings for the validation and test data.
    - The classifier then predicts class probabilities, and performance is measured using metrics such as accuracy, AUC, sensitivity, and specificity.
    - The learned feature is visualised using t-SNE, showing how benign and malignant images form distinct clusters.
 
@@ -102,13 +102,13 @@ This ensures reproducible results across:
    - Data augmentations (rotations, flip, colour jitter, affine transforms)
    - Model weight initialisation and training
 
-If a different seed is to be used, simple replace the value of `seed` with another integer. Alternatively, to use a completely random seed each run, simply generate one with: 
+If a different seed is to be used, simply replace the value of `seed` with another integer. Alternatively, to use a completely random seed each run, simply generate one with: 
 ```python
 seed = random.randint(0, 2**32 - 1)
 ```
 
 ## The Dataset
-The pre-processed version of the dataset is used and can be found [here](https://www.kaggle.com/datasets/nischaydnk/isic-2020-jpg-x224-resized). This one was used instead of the official version due it having a smaller image resolution of 224x224, which significantly reduced system storage.  
+The pre-processed version of the dataset is used and can be found [here](https://www.kaggle.com/datasets/nischaydnk/isic-2020-jpg-224x224-resized). This one was used instead of the official version due to it having a smaller image resolution of 224x224, which significantly reduced system storage.  The metadata file also needs to be downloaded.
 
 ### Handling Class Imbalance
 The dataset containing 33126 images was highly imbalanced. 32542 were of the benign class and the remaining 584 were malignant. To address this, targeted augmentation and triplet sampling strategies were applied.  
@@ -152,10 +152,12 @@ It was decided to retain all benign cases (`benign_fraction=1.0`), which effecti
 The dataset was randomly shuffled and split into three subsets.
    - Train Set: 70% of the data (ensures the model has enough examples to learn complex patterns from the data)
    - Test Set: 20% of the data (provides a substantial sample of unseen data, leading to a more reliable assessment of the model's ability to generalise)
-   - Validation Set: 10% of the data (adequate amount of data for finding optimal classifiers producing highest validation accuracy after training)
+   - Validation Set: 10% of the data (adequate amount of data for finding optimal classifiers producing highest validation accuracy during training by monitoring performance per epoch)
 
-## Usage
-Firstly, ensure that all 33126 images are stored inside a folder named: `ISIC_2020_Training_JPEG/`  
+## Usage  
+
+### Training, Validation, and Testing
+Firstly, ensure that all 33126 images are stored inside a folder named: `ISIC_2020_Training_JPEG/` (trailing slash to show it is a directory, not actually in the file or directory's name itself)
 The CSV file containing the metadata must also be named: `train-metadata.csv`  
 
 Ensure the files are organised as follows:
@@ -218,9 +220,11 @@ Training completed. All model weights, evaluation metrics, and embedding visuali
 ```
 The printed text version of the confusion matrix corresponds to the following in the [Test Set Confusion Matrix](#test-set-confusion-matrix) of the results section.
 
-Note that the loss and accuracy plots (for train and validation sets), t-SNE embeddings (for all three sets), test set confusion matrices, and test set ROC curve are saved as images in the directory `checkpoints/`.  
+Note that the loss and accuracy plots (for train and validation sets), t-SNE embeddings (for all three sets), test set confusion matrix, and test set ROC curve are saved as images in the directory `checkpoints/`. These outputs are in the [Results](#results) section.
 
-After training (`train.py`), the `checkpoints/` directory will contain `best_siamese.pth` and `best_classifier.pth`. These files store each model's weights corresponding to the highest validation accuracy achieved during training. These two files are also required for inferencing with `predict.py`. Without them, the script cannot load the trained models to make predictions.  
+After training (`train.py`), the `checkpoints/` directory will contain `best_siamese.pth` and `best_classifier.pth`. These files store each model's weights corresponding to the highest validation accuracy achieved during training. These two files are also required for inferencing with `predict.py`. Without `checkpoints/` and the saved models, the inference script cannot load the trained models to make predictions.  
+
+### Inference on Trained Models
 
 To perform inference on trained models, simply run the following:  
 ```
@@ -254,12 +258,13 @@ Prediction completed. Outputs saved in ./checkpoints/
 ```
 The confusion matrix, ROC curve, and t-SNE embedding of the sample set are saved as images in `checkpoints/`. Outputs of these can be viewed in the [Results of Sample Data](#results-of-sample-data-predictpy-outputs) section. Check this section for the confusion matrix labels.
 
-## Results
+## Results  
+These are the results of `train.py`.
 ### Siamese Network Results
 #### Loss Plot
 <img width="540" height="380" alt="siamese_metrics_loss" src="https://github.com/user-attachments/assets/4856bbdd-3198-4f63-ba11-0b63b643e796" />  
 
-The Siamese network training loss drops sharply from 0.123 in epoch 1 to near zero by epoch 6, indicating that the network quickly satisfies the triplet constraints on the training set. In constrast, the validation loss remains relatively high at 0.89 in epoch 1, decreasing to around 0.598 by epoch 8, then flucuating between 0.65 and 0.88. This shows that the network overfits the training triplets and struggles to generalise to unseen data.
+The Siamese network training loss drops sharply from 0.123 in epoch 1 to near zero by epoch 6, indicating that the network quickly satisfies the triplet constraints on the training set. In contrast, the validation loss remains relatively high at 0.89 in epoch 1, decreasing to around 0.598 by epoch 8, then flucuating between 0.65 and 0.88. This shows that the network somewhat overfits the training triplets and struggles to generalise to unseen data.
 
 #### Accuracy Graph
 <img width="540" height="380" alt="siamese_metrics_accuracy" src="https://github.com/user-attachments/assets/315544dc-671e-480b-b23a-3716a2c5adea" />  
@@ -282,17 +287,19 @@ The validation and test embeddings show clearer class separation than the traini
 #### Loss Plot
 <img width="540" height="380" alt="classifier_metrics_loss" src="https://github.com/user-attachments/assets/675fc8fb-fded-406a-b894-682e1b178c98" />  
 
-The classifier's training loss decreases rapidly during the first few epochs, from around 0.035 in epoch 1 to roughly 0.015 by epoch 10. This continues to decline gradually, reaching about 0.012 by epoch 25. The validation loss closely follows this trend, remaining consistently low (around 0.016-0.020) with only minor fluctuations across epochs. This indicates that the classifier quickly converged and maintained stable generalisation without significant overfitting. 
+The classifier's training loss decreases rapidly during the first few epochs, from around 0.035 in epoch 1 to roughly 0.016 by epoch 10. This continues to decline gradually, reaching about 0.012 by epoch 25. The validation loss closely follows this trend, remaining consistently low (around 0.016-0.020) with only minor fluctuations across epochs. This indicates that the classifier quickly converged and maintained stable generalisation without significant overfitting. 
 
 #### Accuracy Graph
 <img width="540" height="380" alt="classifier_metrics_accuracy" src="https://github.com/user-attachments/assets/12590667-bf5b-4edd-80f9-f659eb9a5fb3" />  
 
-The accuracies rise sharply during the initial epochs, improving from around 99% in epoch 1 to approximately 99.5% by epoch 5. After this rapid increase, both training and validation accuracies stabilise, consistently remaining between 99.4% and 99.7% for the remainder of training. This indicates that the model quickly converged and maintained strong, stable performance without signs of overfitting.
+The accuracies rise sharply during the initial epochs, improving from around 99% in epoch 1 to approximately 99.5% by epoch 5. After this rapid increase, both training and validation accuracies stabilise, consistently remaining between 99.4% and 99.7% for the remainder of training. This indicates that the model quickly converged and maintained strong, stable performance without significant signs of overfitting.
 
 #### Test Set ROC Curve
 <img width="540" height="380" alt="test_roc_curve" src="https://github.com/user-attachments/assets/b81bb970-b2a1-4590-86cf-590a08f25b1d" />  
 
-The AUC is actually 0.9973 (says 1.0 in the image due to plot rounding and display precision). This ROC curve and AUC value shows excellent separability between benign and malignant classes in the test set. The curve closely approaches the top-left corner, reflecting minimal overlap between the predicted probabilities of the two categories.
+The AUC was actually 0.9973 (says 1.0 in the image due to plot rounding and display precision).   
+
+This ROC curve and AUC value shows excellent separability between benign and malignant classes in the test set. The curve closely approaches the top-left corner, reflecting minimal overlap between the predicted probabilities of the two categories.
 
 #### Test Set Confusion Matrix
 <img width="540" height="380" alt="test_conf_matrix" src="https://github.com/user-attachments/assets/d5f547ab-610a-4dac-9f33-76ec87d6c1de" />
@@ -304,7 +311,7 @@ The AUC is actually 0.9973 (says 1.0 in the image due to plot rounding and displ
 
 The model achieved 99.47% test accuracy, substantially exceeding the project's target performance of 80% accuracy. The model achieves a high sensitivity of 0.8571, which reflects good detection capability. However, further improvement may be desirable, as medical screening tasks typically emphasise maximising sensitivity to minimise the risk of missed diagnoses [2].
 
-## Results of Sample Data (`predict.py` outputs)
+## Results of Sample Data
 This section shows the outputs from `predict.py` when the sample data is fed into the entire network for evaluation or prediction. The network uses the saved optimal classifier weights obtained during training (from `train.py`), which effectively shows example usage of the entire trained model. Due to this, no analysis will be made on the outputs and they are presented for demonstration purposes only. Additionally, analysis is omitted because this is not a dedicated test set on completely unseen data as mentioned before.
 
 ### t-SNE Scatterplot and ROC Curve
@@ -322,13 +329,13 @@ The actual AUC was 0.9992.
 
 ## Future Recommendations
 Based on the test performance results from the trained models (results of `train.py`), some recommendations for improvement can be considered. These recommendations focus on increasing the sensitivity value because it is important for the entire model to accurately identify true malignant cases in a real medical setting.
-1. **Weighted Cross-Entropy**
+1. **Consider the Use of Weighted Cross-Entropy**
 
    Weighted cross-entropy multiplies the loss for each class by a class-specific weight. For a highly imbalanced dataset like ISIC 2020, assigning a higher weight to the malignant class forces the binary classifier to focus more on correctly identifying malignant samples. This typically increases sensitivity but may slightly reduce specificity [3]. Careful tuning of the class weights is important to achieve a balanced trade-off between the two.
 
-2. **Focal Loss**
+2. **Implement Focal Loss**
 
-   Focal loss is an alternative to cross-entropy that dynamically down-weights easy examples and focuses the binary classifier's learning on hard or misclassified samples. This is particularly useful for this imbalanced dataset, where benign images dominate. By reducing the contribution of easily classified benign samples to the loss, the model becomes more sensitive to malignant cases. The focusing parameter ($\gamma$) controls how much harder samples are emphasised and should be tuned carefully for optimal performance.
+   Focal loss is an alternative to cross-entropy that dynamically down-weights easy examples and focuses the binary classifier's learning on hard or misclassified samples. This is particularly useful for this imbalanced dataset, where benign images dominate. By reducing the contribution of easily classified benign samples to the loss, the model becomes more sensitive to malignant cases. The focusing parameter ($\gamma$) controls how much the harder samples are emphasised and should be tuned carefully for optimal performance.
 
 3. **More Aggressive and Intensive Data Augmentation with Synthetic Oversampling**
 
@@ -348,3 +355,4 @@ ChatGPT was used to produce stronger augmentations given the basic benign augmen
 [2]: National Academies Press (2015, December 29). Improving Diagnosis in Health Care. National Library of Medicine. https://www.ncbi.nlm.nih.gov/books/NBK338593/ 
 
 [3]: Shreffler, Jacob; Huecker, Martin R. (2023, March 6). Diagnostic Testing Accuracy: Sensitivity, Specificity, Predictive Values and Likelihood Ratios. National Library of Medicine: https://www.ncbi.nlm.nih.gov/books/NBK557491/
+
