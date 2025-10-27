@@ -108,7 +108,7 @@ seed = random.randint(0, 2**32 - 1)
 ```
 
 ## The Dataset
-The pre-processed version of the dataset is used and can be found [here](https://www.kaggle.com/datasets/nischaydnk/isic-2020-jpg-224x224-resized). This one was used instead of the official version due to it having a smaller image resolution of 224x224, which significantly reduced system storage.  The metadata file also needs to be downloaded.
+The pre-processed version of the dataset is used and can be found [here](https://www.kaggle.com/datasets/nischaydnk/isic-2020-jpg-224x224-resized). This one was used instead of the official version due to it having a smaller image resolution of 224x224, which significantly reduced system storage. The metadata file also needs to be downloaded.
 
 ### Handling Class Imbalance
 The dataset containing 33126 images was highly imbalanced. 32542 were of the benign class and the remaining 584 were malignant. To address this, targeted augmentation and triplet sampling strategies were applied.  
@@ -157,7 +157,8 @@ The dataset was randomly shuffled and split into three subsets.
 ## Usage  
 
 ### Training, Validation, and Testing
-Firstly, ensure that all 33126 images are stored inside a folder named: `ISIC_2020_Training_JPEG/` (trailing slash to show it is a directory, not actually in the file or directory's name itself)
+Firstly, ensure that all 33126 images are stored inside a folder named: `ISIC_2020_Training_JPEG/` (trailing slash to show it is a directory, not actually in the file or directory's name itself)  
+
 The CSV file containing the metadata must also be named: `train-metadata.csv`  
 
 Ensure the files are organised as follows:
@@ -355,6 +356,7 @@ ChatGPT was used to produce stronger augmentations given the basic benign augmen
 [2]: National Academies Press (2015, December 29). Improving Diagnosis in Health Care. National Library of Medicine. https://www.ncbi.nlm.nih.gov/books/NBK338593/ 
 
 [3]: Shreffler, Jacob; Huecker, Martin R. (2023, March 6). Diagnostic Testing Accuracy: Sensitivity, Specificity, Predictive Values and Likelihood Ratios. National Library of Medicine: https://www.ncbi.nlm.nih.gov/books/NBK557491/
+
 
 
 
