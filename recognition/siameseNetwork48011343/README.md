@@ -39,8 +39,8 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
     - Normalisation: L2 normalisation to constrain embeddings on the unit hypersphere.
     - Output: 128-dimensional embedding vector representing each input image.
     - Loss function: Triplet margin loss (`TripletMarginLoss`) for training on triplets.
-    - Optimiser: Adam optimiser applied to update Siamese network parameters (learning rate of $1 \times 10^{-4}$).
-    - Epochs: 30
+    - Optimiser: Adam optimiser applied to update Siamese network parameters (learning rate of $1 \times 10^{-4}$ ensures stable convergence).
+    - Epochs: 30 (provides sufficient convergence without overfitting)
     
   - **Training Strategy (triplet learning)**
     - Trained using triplet loss on *(anchor, positive, negative)* image sets.
@@ -56,7 +56,7 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
       
     <img width="398" height="59" alt="triplet loss eq" src="https://github.com/user-attachments/assets/42f6dbd9-442e-48a8-a839-5a8af2739499" />
 
-    A margin value of 1.0 was selected.
+    A margin value of 1.0 was selected because a moderate margin prevents collapsing embeddings (too small) or unstable optimisation (too large).
 
   - **Classifier Head**
     
@@ -65,11 +65,11 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
     - Input: 128-dimensional embeddings from the Siamese network.
     - Architecture: Fully connected layers (128 &rarr; 512 &rarr; 256 &rarr; 64 &rarr; 2).
     - Activation: ReLU after each hidden layer.
-    - Regularisation: Batch normalisation and dropout for generalisation.
+    - Regularisation: Batch normalisation and dropout (`p=0.4`) to reduce overfitting and improve generalisation across patient images.
     - Output: Two logits corresponding to benign and malignant cases.
     - Loss function: Cross-entropy loss is used to train the classifier, comparing predicted logits against ground-truth labels.
-    - Optimiser: Adam optimiser is applied to update classifier parameters (learning rate of $5 \times 10^{-4}$).
-    - Epochs: 25
+    - Optimiser: Adam optimiser is applied to update classifier parameters (learning rate of $5 \times 10^{-4}$ to allow faster fine-tuning of the classifier).
+    - Epochs: 25 (sufficient for convergence while avoiding overfitting)
    
 ## Dependencies and Reproducibility
 The main dependencies required are:
@@ -355,4 +355,5 @@ ChatGPT was used to produce stronger augmentations given the basic benign augmen
 [2]: National Academies Press (2015, December 29). Improving Diagnosis in Health Care. National Library of Medicine. https://www.ncbi.nlm.nih.gov/books/NBK338593/ 
 
 [3]: Shreffler, Jacob; Huecker, Martin R. (2023, March 6). Diagnostic Testing Accuracy: Sensitivity, Specificity, Predictive Values and Likelihood Ratios. National Library of Medicine: https://www.ncbi.nlm.nih.gov/books/NBK557491/
+
 
