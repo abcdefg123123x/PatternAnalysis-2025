@@ -22,7 +22,17 @@ from torchvision.models import resnet34
 
 class SiameseNetwork(nn.Module):
     """
-    Siamese Network using a ResNet backbone + projection head.
+    Siamese Network using a ResNet 34 backbone and projection head for
+    embedding images.
+
+    This network produces L2-normalised embeddings suitable for triplet loss
+    training.
+
+    Input images are expected in PyTorch format: [B, C, H, W] where
+        B = batch size
+        C = number of channels
+        H = image height
+        W = image width
 
     The backbone outputs a 512-dim feature, then the projection head refines it
     into a lower-dimensional, normalised embedding suitable for triplet loss
@@ -56,10 +66,10 @@ class SiameseNetwork(nn.Module):
 
     def forward_once(self, x):
         """
-        Forward pass for a single input image.
+        Forward pass for a single batch of images.
 
         Args:
-            x (Tensor): Input image tensor of shape [B, C, H, W]
+            x (Tensor): Input image batch of shape [B, C, H, W]
 
         Returns:
             Tensor: Normalised embedding of shape [B, 128]
