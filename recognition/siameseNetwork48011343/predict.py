@@ -100,7 +100,7 @@ def main():
     metrics = compute_roc_auc(classifier, predict_features, predict_labels,
                               save_path="checkpoints/PREDICT_roc_curve.png")
 
-    # Calculate test (validation) accuracy from confusion matrix
+    # Calculate accuracy of sample set from confusion matrix
     tn, fp, fn, tp = cm.ravel()
     test_acc = (tp + tn) / (tp + tn + fp + fn)
     print(f" Accuracy on sample data: {test_acc * 100:.2f}%")
