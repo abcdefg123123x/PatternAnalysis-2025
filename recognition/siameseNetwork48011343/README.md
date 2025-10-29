@@ -18,14 +18,14 @@ This implemented algorithm follows a two-stage deep learning pipeline combining 
 
 2. **Binary Classification (Stage 2)**
    - The learned embeddings are fed into a binary classifier network (a multi-layer perception with BatchNorm and Dropout).
-   - It outputs logits for benign and malignant classes.
+   - It outputs logits for the benign and malignant classes.
    - Higher logits indicate greater model confidence for the corresponding class. These logits are later converted into probabilities using the softmax function during evaluation.
    - This classifier is trained using standard cross-entropy loss, using embeddings from the trained Siamese model.
   
 3. **Evaluation and Visualisation**
    - After training, the Siamese model generates embeddings for the validation and test data.
    - The classifier then predicts class probabilities, and performance is measured using metrics such as accuracy, AUC, sensitivity, and specificity.
-   - The learned feature is visualised using t-SNE, showing how benign and malignant images form distinct clusters.
+   - The learned features is visualised using t-SNE, showing how benign and malignant images form distinct clusters.
 
 ### Network Architecture
   - **Embedding Network (Siamese backbone)**
@@ -146,7 +146,7 @@ Despite undersampling not being used in the project, it should be noted that the
 
      For example, setting `benign_fraction=0.5` would use only half of the benign data while retaining all malignant cases. This drastically reduces runtime, but negatively affects generalisation due to a lower amount of diverse samples available.
      
-It was decided to retain all benign cases (`benign_fraction=1.0`), which effectively uses all 33126 images. This was decided because it would allow effective generalisation on unseen data (test set). However, this greatly increases computational time as the model uses more data to train on as compared to if `benign_fraction<1.0`.  
+It was decided to retain all benign cases (`benign_fraction=1.0`), which effectively uses all 33126 images. This was decided because it would allow effective generalisation on unseen data (the test set). However, this greatly increases computational time as the model uses more data to train on as compared to if `benign_fraction<1.0`.  
 
 ### Training, Validation, and Testing Splits
 The dataset was randomly shuffled and split into three subsets.
@@ -239,19 +239,19 @@ Running inference on device: cuda
 Evaluating Binary Classifier on sample embeddings:
 Sample Set Confusion Matrix:
 Labels: ['Benign', 'Malignant']
-[[3242    5]
- [  10   56]]
+[[3242   11]
+ [   7   53]]
 
 ROC and AUC Results:
- - AUC: 0.9992
- - Sensitivity (Recall for positive): 0.8485
- - Specificity (True negative rate): 0.9985
- Accuracy on sample data: 99.55%
+ - AUC: 0.9927
+ - Sensitivity (Recall for positive): 0.8833
+ - Specificity (True negative rate): 0.9966
+ Accuracy on sample data: 99.46%
 
 Evaluation Summary:
- AUC: 0.9992
- Sensitivity: 0.8485
- Specificity: 0.9985
+ AUC: 0.9927
+ Sensitivity: 0.8833
+ Specificity: 0.9966
 
 Generating t-SNE visualisation for sample embeddings...
 
@@ -270,17 +270,15 @@ The Siamese network training loss drops sharply from 0.123 in epoch 1 to near ze
 #### Accuracy Graph
 <img width="540" height="380" alt="siamese_metrics_accuracy" src="https://github.com/user-attachments/assets/315544dc-671e-480b-b23a-3716a2c5adea" />  
 
-Both training and validation accuracies share very similar trends. The accuracies improve significantly from around 65% at epoch 1 to over 87% at other epochs. However, the accuracies remain lower after epoch 15, fluctuating between 55% and 83%. This indicates potential instability in the later training stages. This means the model maintains good generalisation, but may be experiencing optimisation challenges or convergence issues in the final epochs.
+Both training and validation accuracies share very similar trends. The accuracies improve significantly from around 65% at epoch 1, reaching over 87% in other epochs. However, the accuracies remain lower after epoch 15, fluctuating between 55% and 83%. This indicates potential instability in the later training stages. This means the model maintains good generalisation, but may be experiencing optimisation challenges or convergence issues in the final epochs.
 
 #### Training Data t-SNE Scatterplot
-<img width="450" height="450" alt="train_embeddings_tsne" src="https://github.com/user-attachments/assets/b8aa7cd2-d974-4f83-9f1d-97bc8a8efff5" />  
-
-'Class 0' corresponds to the benign class, and 'Class 1' corresponds to the malignant. This is also the same for all other t-SNE scatterplots.
+<img width="400" height="400" alt="train_embeddings_tsne" src="https://github.com/user-attachments/assets/c472f6c0-d77a-4761-832a-a9b9ed4491f7" />
 
 The t-SNE plot shows the Siamese network has learned some class separation, but with noticeable overlap between benign and malignant clusters. This indicates the model captures meaningful features but struggles to fully distinguish between lesion types, explaining occasional misclassifications despite overall good performance.
 
 #### Validation and Test Data t-SNE Scatterplot
-<img width="450" height="450" alt="val_embeddings_tsne" src="https://github.com/user-attachments/assets/a7a466f7-7eff-4b56-a987-bcbdc3ca51c1" /> <img width="450" height="450" alt="test_embeddings_tsne" src="https://github.com/user-attachments/assets/f27c9d82-8c37-4a78-aae6-843de61edf0b" />  
+<img width="400" height="400" alt="val_embeddings_tsne" src="https://github.com/user-attachments/assets/0c682594-913d-4b86-881f-9e9606a29ab1" /> <img width="400" height="400" alt="test_embeddings_tsne" src="https://github.com/user-attachments/assets/d1e99bfa-8d6a-4017-a6b5-7a86946dfa05" />
 
 The validation and test embeddings show clearer class separation than the training set, with more distinct benign and malignant clusters. This indicates the Siamese network generalises well to unseen data and learns meaningful features that transfer effectively beyond the training samples.
 
@@ -313,20 +311,20 @@ This ROC curve and AUC value shows excellent separability between benign and mal
 The model achieved 99.47% test accuracy, substantially exceeding the project's target performance of 80% accuracy. The model achieves a high sensitivity of 0.8571, which reflects good detection capability. However, further improvement may be desirable, as medical screening tasks typically emphasise maximising sensitivity to minimise the risk of missed diagnoses [2].
 
 ## Results of Sample Data
-This section shows the outputs from `predict.py` when the sample data is fed into the entire network for evaluation or prediction. The network uses the saved optimal classifier weights obtained during training (from `train.py`), which effectively shows example usage of the entire trained model. Due to this, no analysis will be made on the outputs and they are presented for demonstration purposes only. Additionally, analysis is omitted because this is not a dedicated test set on completely unseen data as mentioned before.
+This section shows the outputs from `predict.py` when the sample data is fed into the entire network for evaluation or prediction. The network uses the saved optimal classifier weights obtained during training (from `train.py`), which effectively shows example usage of the entire trained model. Due to this, no analysis will be made on the outputs and they are presented for demonstration purposes only. Additionally, analysis is omitted because this is not a dedicated test set on completely unseen data as mentioned before. The produced metrics in this section is not indicative of performance when generalising on unseen data.
 
 ### t-SNE Scatterplot and ROC Curve
-<img width="400" height="400" alt="PREDICT_embeddings_tsne_predict" src="https://github.com/user-attachments/assets/0783a5cd-5dce-497a-8c19-711f3d815ae7" /> <img width="500" height="400" alt="PREDICT_roc_curve" src="https://github.com/user-attachments/assets/bc09941e-4201-4dcf-885e-6fa3c49f64a4" />
+<img width="400" height="400" alt="PREDICT_embeddings_tsne_predict" src="https://github.com/user-attachments/assets/c548ecbb-ca88-46e8-9f5a-6dd77806e6e3" /> <img width="500" height="400" alt="PREDICT_roc_curve" src="https://github.com/user-attachments/assets/bc09941e-4201-4dcf-885e-6fa3c49f64a4" />
 
-The actual AUC was 0.9992.
+The actual AUC was 0.9927.
 
 ### Confusion Matrix
 <img width="540" height="380" alt="PREDICT_confusion_matrix" src="https://github.com/user-attachments/assets/e9aae9f5-e85e-461d-af6f-f19da635a479" />
 
 ### Sample Data Performance
-   - Accuracy: `99.55%`
-   - Sensitivity: `0.8485`
-   - Specificity: `0.9985`
+   - Accuracy: `99.46%`
+   - Sensitivity: `0.8833`
+   - Specificity: `0.9966`
 
 ## Future Recommendations
 Based on the test performance results from the trained models (results of `train.py`), some recommendations for improvement can be considered. These recommendations focus on increasing the sensitivity value because it is important for the entire model to accurately identify true malignant cases in a real medical setting.
@@ -356,6 +354,7 @@ ChatGPT was used to produce stronger augmentations given the basic benign augmen
 [2]: National Academies Press (2015, December 29). Improving Diagnosis in Health Care. National Library of Medicine. https://www.ncbi.nlm.nih.gov/books/NBK338593/ 
 
 [3]: Shreffler, Jacob; Huecker, Martin R. (2023, March 6). Diagnostic Testing Accuracy: Sensitivity, Specificity, Predictive Values and Likelihood Ratios. National Library of Medicine: https://www.ncbi.nlm.nih.gov/books/NBK557491/
+
 
 
 
