@@ -257,7 +257,7 @@ Generating t-SNE visualisation for sample embeddings...
 
 Prediction completed. Outputs saved in ./checkpoints/
 ```
-The confusion matrix, ROC curve, and t-SNE embedding of the sample set are saved as images in `checkpoints/`. Outputs of these can be viewed in the [Results of Sample Data](#results-of-sample-data-predictpy-outputs) section. Check this section for the confusion matrix labels.
+The confusion matrix, ROC curve, and t-SNE embedding of the sample set are saved as images in `checkpoints/`. Outputs of these can be viewed in the [Results of Sample Data](#results-of-sample-data) section. Check this section for the confusion matrix labels.
 
 ## Results  
 These are the results of `train.py`.
@@ -314,12 +314,12 @@ The model achieved 99.47% test accuracy, substantially exceeding the project's t
 This section shows the outputs from `predict.py` when the sample data is fed into the entire network for evaluation or prediction. The network uses the saved optimal classifier weights obtained during training (from `train.py`), which effectively shows example usage of the entire trained model. Due to this, no analysis will be made on the outputs and they are presented for demonstration purposes only. Additionally, analysis is omitted because this is not a dedicated test set on completely unseen data as mentioned before. The produced metrics in this section is not indicative of performance when generalising on unseen data.
 
 ### t-SNE Scatterplot and ROC Curve
-<img width="400" height="400" alt="PREDICT_embeddings_tsne_predict" src="https://github.com/user-attachments/assets/c548ecbb-ca88-46e8-9f5a-6dd77806e6e3" /> <img width="500" height="400" alt="PREDICT_roc_curve" src="https://github.com/user-attachments/assets/bc09941e-4201-4dcf-885e-6fa3c49f64a4" />
+<img width="400" height="400" alt="PREDICT_embeddings_tsne_predict" src="https://github.com/user-attachments/assets/c548ecbb-ca88-46e8-9f5a-6dd77806e6e3" /> <img width="500" height="400" alt="PREDICT_roc_curve" src="https://github.com/user-attachments/assets/2b9e029c-931d-40d6-8064-169e4d9c65d4" />
 
 The actual AUC was 0.9927.
 
 ### Confusion Matrix
-<img width="540" height="380" alt="PREDICT_confusion_matrix" src="https://github.com/user-attachments/assets/e9aae9f5-e85e-461d-af6f-f19da635a479" />
+<img width="640" height="480" alt="PREDICT_confusion_matrix" src="https://github.com/user-attachments/assets/b0856c43-06ad-4610-b218-8f2ea916f30e" />
 
 ### Sample Data Performance
    - Accuracy: `99.46%`
@@ -354,6 +354,7 @@ ChatGPT was used to produce stronger augmentations given the basic benign augmen
 [2]: National Academies Press (2015, December 29). Improving Diagnosis in Health Care. National Library of Medicine. https://www.ncbi.nlm.nih.gov/books/NBK338593/ 
 
 [3]: Shreffler, Jacob; Huecker, Martin R. (2023, March 6). Diagnostic Testing Accuracy: Sensitivity, Specificity, Predictive Values and Likelihood Ratios. National Library of Medicine: https://www.ncbi.nlm.nih.gov/books/NBK557491/
+
 
 
 
