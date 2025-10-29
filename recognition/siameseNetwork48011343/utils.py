@@ -38,7 +38,7 @@ def plot_metrics(train_losses, val_losses, train_accs, val_accs,
     # Ensure save directory exists
     os.makedirs(os.path.dirname(save_path_prefix), exist_ok=True)
 
-    # Generate x-axis as epoch indicies
+    # Generate x-axis as epoch indices
     epochs = np.arange(1, len(train_losses) + 1)
 
     # Plot Loss

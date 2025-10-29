@@ -59,7 +59,7 @@ class ISICDataset(Dataset):
     """
     def __init__(self, image_root, samples):
         """
-        Intialise the dataset.
+        Initialise the dataset.
 
         Args:
             image_root (str): Path to folder containing the images.
